@@ -1,0 +1,126 @@
+```js title="节流"
+function throttle(fn, time = 300) {
+  // 先点击生效
+  let flag = false;
+  return function () {
+    if (flag) {
+      return;
+    }
+    flag = true;
+    setTimeout(() => {
+      fn.call(this, arguments);
+      flag = false;
+    }, time);
+  };
+}
+```
+
+```js title="防抖"
+function debounce(fn, time = 300) {
+  // 后执行
+  let timer;
+  return function () {
+    timer && clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn.call(this, arguments);
+    }, time);
+  };
+}
+```
+
+```js title="深拷贝"
+function clone(target, map = new Map()) {
+  if (typeof target === "object") {
+    let obj = Array.isArray(target) ? [] : {};
+
+    if (map.get(target)) {
+      return map.get(target);
+    }
+
+    map.set(target, obj);
+
+    for (const key in target) {
+      obj[key] = clone(target[key], map);
+    }
+    return obj;
+  } else {
+    return target;
+  }
+}
+```
+
+```js title="三数之和"
+function threeSum(nums) {
+  nums = [-1, 0, 1, 2, -1, -4];
+  let res = [];
+  nums.sort((a, b) => a - b);
+  for (let i = 0; i < nums.length; i++) {
+    if (nums[i] === nums[i - 1]) continue;
+
+    let left = i + 1;
+    let right = nums.length - 1;
+    let target = -nums[i];
+
+    while (left < right) {
+      if (nums[left] + nums[right] === target) {
+        res.push([nums[left], -target, nums[right]]);
+        while (nums[left] === nums[left + 1]) {
+          left++;
+        }
+        while (nums[right] === nums[right - 1]) {
+          right--;
+        }
+        left++;
+        right--;
+      } else if (nums[left] + nums[right] > target) {
+        right--;
+      } else {
+        left++;
+      }
+    }
+  }
+
+  return res;
+}
+```
+
+```js title="三数之和 closest"
+function threeSumClosest(nums, target) {
+  let res = 0;
+  let min = Number.MAX_VALUE;
+  nums.sort((a, b) => a - b);
+  for (let i = 0; i < nums.length; i++) {
+    if (nums[i] === nums[i - 1]) continue;
+
+    let left = i + 1;
+    let right = nums.length - 1;
+    let current = nums[i];
+    let dist = 0;
+
+    while (left < right) {
+      let sum = nums[left] + nums[right] + current;
+      dist = Math.abs(sum - target);
+
+      if (dist === 0) {
+        return target;
+      } else if (sum > target) {
+        while (nums[right] === nums[right - 1]) {
+          right--;
+        }
+        right--;
+      } else {
+        while (nums[left] === nums[left + 1]) {
+          left++;
+        }
+        left++;
+      }
+
+      if (min > dist) {
+        min = dist;
+        res = sum;
+      }
+    }
+  }
+  return res;
+}
+```

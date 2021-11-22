@@ -1,0 +1,83 @@
+# Interview
+
+## 浏览器从输入 url 到渲染页面，发生了什么
+
+1. 首先解析域名，利用 dns 服务器解析域名成 ip
+
+   - 域名为什么要解析？
+
+     - 首先域名只能是 字母+数字+一些特殊符号（就是不包含百分号、双引号）不转义会出歧义 ke=y=1
+
+     - Utf-8 编码
+     - encodeURL encodeURLComponent 编码
+
+   - dns 如何工作？
+
+     - 首先会从本机的 hosts 文件查找，查找到返回，
+     - 然后从本机配置的 dns 服务器缓存查找
+     - 然后从根 DNS 服务器查找（全球 13 台）
+     - 然后试图解析.66rpg.com 直到能解析
+
+   - 前端 dns 优化
+
+     - html 页面头部写入 dns 缓存地址
+
+2. 拿到 ip 以后，建立 TCP 链接（三次握手以及后面的四次分手）
+
+   - 为什么是三次两次不行？
+     - 两次可能会出现 A => B，B 未收到，A 又发送给 B
+     - A=>B，A 未收到
+   - 第一次握手：A 发送位码 SYN=1TCP 包给服务器，并且随机产生一个确认号，主机 B 收到 SYN 码知道 A 要建立连接
+   - 第二次握手：B 收到请求以后，向 A 发送确认号（主机 A 的确认码+1），SYN=1，SEQ=随机数的包
+   - 第三次握手：A 收到确认号检查是否正确，是否是第一次发送值+1，以及位码是否为 1，如果正确，A 会再次发送主机 B SEQ+1，ack=1 给 B，主机 B 收到以后建立成功
+
+3. 然后是强缓存，协商缓存
+
+   - 强缓存，cache-control：no-cache 直接进入协商缓存，如果在时间内命中强缓存，不发送请求直接本地缓存读取文件， 如果没有 cache-control 会读取 expires 对比是否过期
+   - 协商缓存，向服务器发送 if-None-match 和 if-modify-since 请求，服务器会比较 etag，相同，协商缓存，304；不一致，新资源+200+新的 etag
+
+4. 拿到 html css js
+   1. 构建 DOM 树
+   2. 构建 CSSOM 树
+   3. 执行 JS
+   4. 构建渲染树
+   5. 渲染树
+   6. 布局
+   7. 绘制
+5. 页面渲染优化
+
+## Vue 和 React 对比
+
+**Vue** 的思想是响应式的，也就是基于数据可变，通过对每一个属性建立 Watcher 来监听，当属性发生变化的时候，响应式的更新对应的虚拟 DOM
+
+**React** 主张函数式编程，所以推崇纯组件，数据不可变，单向数据流
+
+监听数据变化实现原理：
+
+- Vue 通过 getter/setter 以及一些函数的劫持，能精确知道数据变化，不需要特别的优化就能达到很好的性能
+- React 通过比较引用的方式进行，如果不优化（PureCompont/shouldComponentUpdate）可能会导致大量不必要的 VDOM 重新渲染
+
+组件通信区别： jsx 和.vue 模版
+
+- HOC 和 Mixins（Vue 中组合不用功能通过 mixin），React 通过高阶组件
+
+性能优化：
+
+- React：shouldComponentUpdate
+- Vue：内部实现 shouldComponentUpdate 优化，由于依赖追踪系统，通过 watcher 判断是否需要重新渲染（页面数据量大时，性能较差）
+
+## Vuex 和 Redux 区别
+
+**Redux** 使用的是不可变数据，**Vuex** 是可变的，每次都用新的 state 替换旧的，vuex 是直接修改
+
+Redux 监测数据变化是通过 diff 比较差异，Vuex 原理与 vue 相同，通过 getter/setter 比较
+
+## webpack
+
+**Plugin/Loader 区别**
+Loader 是加载器
+
+
+## ES moudle 和 CommonJS 区别
+
+## UseCallback UseMemo Memo 区别

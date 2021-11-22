@@ -1,0 +1,207 @@
+# Nuxt
+
+**项目技术 nuxt, composition-api**
+[M 站地址](https://m.66rpg.com/mini)
+
+:::tip 前言
+为什么采用 composition-api, 因为 composition-api 是 Vue 下一个版本最常用的语法,一个全新的逻辑重用和代码组织方法.
+
+代码更易读, 写法更舒服.
+:::
+
+目标是为了开发方便并且便于生产环境测试用
+
+- 本地 test debug main 环境
+- 生产环境 test debug main 环境
+
+需要区分环境, 所以引入 cross-env 插件, 可以在启动/构建项目的时候设置环境
+
+根据不同的环境设置不同 prefix,从而走不同的反代
+
+:::caution 坑点
+
+- 反代 target 地址需要自定义, 由于地址需要根据当前分支,主域名去设置, 所以用到了 router 可以设置为函数, 里面可以拿到 headers
+- 生产环境的 build start 都需要设置环境参数
+
+解决方案:
+
+```js title="nuxt.config.js"
+
+ axios: {
+    proxy: true,
+    prefix:
+      process.env.NODE_ENV === 'dev'
+        ? '/test'
+        : '',
+    credentials: true,
+  },
+
+  proxy: {
+    '/test': {
+      target: 'http://test-www.66rpg.com',
+      ws: true,
+      pathRewrite: {
+        '^/test': '/',
+        changeOrigin: true,
+      },
+      router({ headers }) {
+        return (
+          'http://' +
+          branch +
+          (headers.domain ? headers.domain : 'www') +
+          '.66rpg.com/'
+        )
+      },
+    },
+  },
+
+// package.json
+"dev": "cross-env NODE_ENV=dev nuxt",
+"build:test": "cross-env NODE_ENV=dev nuxt build",
+"start:test": "cross-env NODE_ENV=dev nuxt start",
+```
+
+:::
+**由于后端原因需要跟目前站上区分开 所以需要设置一个 前缀参数 /mini 目标是 host + 'xxx' + 路由**
+
+:::caution 坑点
+
+- 理想情况是设置了 base 以后, 访问 / 会自动重定向到 /mini, 不过这一步 nuxt 官方并没有做, 而是提供了一个 hook 方案, 拿到 response 然后重定向
+- hook 方案会和 proxy 冲突,需要手动修改
+
+解决方案:
+
+```js title="nuxt.config.js"
+router: {
+  base: "/mini";
+}
+
+hooks: hooks(this); // 官网写法 这样写有问题
+```
+
+```js title="hook/route-redirec-portal.js"
+function projectHooksRouteRedirectPortal(req, res, next) {
+  if (pathname === "/") {
+    res.writeHead(302, {
+      Location,
+    });
+    res.end();
+  }
+  next();
+}
+```
+
+```js title="nuxt.config.js"
+// 解决方案
+const config = {
+  router: {
+    base: "/mini",
+  },
+};
+config.hooks = hooks(config);
+
+export default config;
+```
+
+:::
+
+#### 组件传参:
+
+- props/emit
+
+  ```javascript
+  props: {
+      detail: {
+        type: Object,
+        required: true,
+      },
+      activedata: {
+        type: Object,
+        required: true,
+      },
+    },
+  ```
+
+- provide/inject 定义一个对象传给 provide 就是响应式
+
+- vuex
+
+#### 首页加载优化:
+
+- plugins 慎重写, 插件按需加载, 一些模块如: swiper 可以在 client 加载,element-ui 设置按需加载
+- 首屏数据,如果是服务器端渲染,需要 异步并行发送接口,同时请求数据 Promise.all
+- 组件懒加载(用了迅雷团队的插件 vue-lazy-component)
+- swiper 图片懒加载,图片设置 webp 压缩
+- v-if 一些首屏未展示模块设置 v-if
+- build 设置 gzip
+
+:::caution 坑点/解决方案:
+
+- 由于 element-ui 需要设置主题色, 需要每个组件的样式单独引入
+- ios webp 支持不好, 需要判断平台走不同的压缩
+
+:::
+
+**由于使用了 composition-api 写法 nuxt 使用问题**
+
+- 获取参数 可以通过 useContext
+- 服务器端请求 使用 useFetch
+
+**需要在全局任一位置请求用户信息接口,并且存储到 store 中**
+
+```js title="middleware/redirect.js"
+
+router: {
+  middleware: 'redirect',
+},
+
+export default async ({ isHMR, store }) => {
+  if (isHMR) return
+  if (!store.state.userInfos.uid) {
+    const { status, data } = await getUserInfo()
+    if (status === 1) {
+      getBasketflower()
+      store.commit('setUserInfo', data.userInfos)
+    } else {
+      store.commit('delUserInfo')
+    }
+  }
+}
+```
+
+**路由访问的时候, 当访问错误路由需要跳转到首页路由**
+
+```javascript
+router: {
+    extendRoutes(routes, resolve) {
+        routes.push({
+            name: 'default',
+            path: '*',
+            component: resolve(__dirname, 'pages/home'),
+        })
+    },
+},
+```
+
+:::caution 需要注意的点:
+
+1. ios safari 浏览器 默认屏蔽 window.open 写一个 a 标签触发 a
+2. swiper 在 nuxt 使用的时候 需要将 swiper 设置为 client, ssr:false, 并且 swiper 需要用 client-only 包裹
+3. props 传参不能用解构赋值, 需要用 watch 监听 props.xxx ,否则数据不会变化
+
+:::
+**兼容性处理 browserslist**
+
+**节流防抖**
+
+**设置启动端口(配合运维做平滑启动)**
+
+```javascript
+ // package.json
+ "config": {
+    "nuxt": {
+      "host": "0.0.0.0",
+      "port": "3000"
+    }
+  },
+```
