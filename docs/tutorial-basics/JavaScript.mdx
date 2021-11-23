@@ -1,0 +1,142 @@
+**Set 和 Map 区别**
+
+- Set 和 Map 主要应用场景在于 数据重组和数据储存
+- Set 是一种叫做集合的数据结构, Map 是一种叫做字典的数据结构
+
+**集合和字典的区别**
+
+- 共同点: 集合、字典可以储存不重复的值
+- 不同点: 集合是以[value,value]形式储存元素, 字典是以[key,value]形式储存
+
+**集合(Set)**
+
+- Set ES6 新增的一种新的数据结构, 类似于数组,成员唯一.使用键值对数据排序即顺序存储
+- Set 本身是一种构造函数, 用来生成 Set 数据结构
+- Set 对象允许你存储任意类型的唯一值, 无论是引用数据类型还是原始值
+
+操作方法:
+
+- add(value): 类似 push
+- delete(value): 删除
+- has(value): 判断是否存在
+- clear(): 清空
+
+:::tip 总结
+
+- 成员唯一、无序且不重复。
+- [value, value]，键值与键名是一致的（或者说只有键值，没有键名）。
+- 可以遍历，方法有：add、delete、has。
+
+:::
+
+**字典 Map**
+
+是一组键值对得结构, 具有极快的查找速度
+
+操作方法:
+
+- set(key, value): 添加新元素
+- get(key): 通过键查找数值返回
+- has(key): 是否存在
+- delete(key): 删除
+- clear(): 清空
+
+:::tip 总结
+
+- 本质上是键值对的集合，类似集合。
+- 可以遍历，方法很多可以跟各种数据格式转换。
+
+:::
+
+**Map 和 Object 的区别**
+
+- Object 中 key 只能是简单数据类型
+- Map 可以是任意数据类型
+- Map 顺序遵循插入顺序
+
+**数组的 filter、every、flat 的作用是什么**
+
+- filter 过滤数组, 不会改变原数组
+- every 一假即假 不会继续遍历
+- some 一真即真 不会继续遍历
+- flat 扁平化数组
+
+**Promise 的 all 和 race 有什么区别**
+
+- Promise.all 结果的顺序与发送顺序一致, 即使 p1 比 p2 慢.
+- Promise.race([p1, p2, p3]) 哪个结果获得快, 就返回哪个结果.
+
+**箭头函数和普通函数区别**
+
+- 箭头函数语法简洁
+- 箭头函数不绑定 this, 会捕获所在上下文 this, 作为自己 this, 正是因为没有 this, 所以不能做构造函数.
+- 箭头函数也是匿名函数, 不能做构造函数, 不可以使用 new 命令.
+
+**构造函数中的 new 做了什么**
+
+- JS 内部先生成一个对象
+- 函数中的 this 指向该对象
+- 执行构造函数语句
+- 返回该对象实例
+- 箭头函数不绑定 arguments, 用 rest 参数解决
+
+```js
+const a = (...args) => {
+  console.log(args); // 数组形式输出参数
+};
+```
+
+**var、let、const 区别**
+
+```js
+const a = {
+  b: 1,
+  c: 2,
+};
+Object.freeze(a);
+a.c = 3;
+```
+
+**闭包**
+
+:::tip 介绍
+
+一个函数和对其周围状态（lexical environment，词法环境）的引用捆绑在一起（或者说函数被引用包围），这样的组合就是闭包（closure）。也就是说，闭包让你可以在一个内层函数中访问到其外层函数的作用域。在 JavaScript 中，每当创建一个函数，闭包就会在函数创建的同时被创建出来。
+
+- 可以在内层函数中访问到外层函数的作用域
+- 创建一个函数, 闭包会在函数创建的同时被创建出来
+
+- 闭包是在函数创建时创建的，即有函数创建就会生成闭包；
+- 闭包和其函数在同一上下文中；
+- 闭包包含该作用域下的所有变量/引用地址；
+- 定义函数不会创建闭包，只有创建/执行函数同时才创建闭包；
+
+:::
+
+**instanceof 的实现原理**
+
+:::tip 介绍
+
+instanceof 是通过原型链判断的, A instanceof B, 在 A 的原型链中层层查找, 是否有原型链等于 B.prototype, 如果一直找到 A 的原型链的顶端是 null 仍不等于 B.prototype, 那么返回 false, 否则返回 true
+
+```js
+
+ function instanceof (left, right) {
+  left = left.__proto__
+  right = right.prototype
+  while (true) {
+    if(left === null) {
+      return false
+    }
+    if(right === right) {
+      return true
+    }
+    left = left.__proto__
+  }
+ }
+
+```
+
+:::
+
+

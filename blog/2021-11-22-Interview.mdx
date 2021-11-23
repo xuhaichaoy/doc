@@ -16,7 +16,7 @@
      - 首先会从本机的 hosts 文件查找，查找到返回，
      - 然后从本机配置的 dns 服务器缓存查找
      - 然后从根 DNS 服务器查找（全球 13 台）
-     - 然后试图解析.66rpg.com 直到能解析
+     - 然后试图解析.baidu.com 直到能解析
 
    - 前端 dns 优化
 
@@ -118,14 +118,16 @@ Redux 监测数据变化是通过 diff 比较差异，Vuex 原理与 vue 相同�
 
 ## ES moudle 和 CommonJS 区别 todo
 
-- CommonJS是对模块的浅拷贝，ES6 Moundle是对模块的引用，即ES6 Moudle只存不读，不能改变其值，也就是指针指向不变，类似const
-- import的接口是read-only（只读状态），不能修改变量值，不能改变指针指向
+- CommonJS 是对模块的浅拷贝，ES6 Moundle 是对模块的引用，即 ES6 Moudle 只存不读，不能改变其值，也就是指针指向不变，类似 const
+- import 的接口是 read-only（只读状态），不能修改变量值，不能改变指针指
+
+  向
 
 ## useCallback UseMemo Memo 区别
 
-- React.memo包裹以后，子组件只在props发生变化以后才会重新渲染。
-- useCallback 可以对函数缓存，父组件给子组件传值（值为函数handleClick），由于handleClick是一个对象，每次重新渲染生成的handleClick都是新的，所以子组件依旧会渲染，这时候只能通过useCallback包裹
-- 如果传递给自组建一个对象{a:1,b:2} 这时候需要使用useMemo
+- React.memo 包裹以后，子组件只在 props 发生变化以后才会重新渲染。
+- useCallback 可以对函数缓存，父组件给子组件传值（值为函数 handleClick），由于 handleClick 是一个对象，每次重新渲染生成的 handleClick 都是新的，所以子组件依旧会渲染，这时候只能通过 useCallback 包裹
+- 如果传递给自组建一个对象{a:1,b:2} 这时候需要使用 useMemo
 
 ## HTTP 协议
 
@@ -176,3 +178,4 @@ Redux 监测数据变化是通过 diff 比较差异，Vuex 原理与 vue 相同�
 - 无连接
 - 无状态
 - 灵活
+
