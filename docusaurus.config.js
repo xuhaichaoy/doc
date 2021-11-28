@@ -8,8 +8,8 @@ const darkCodeTheme = require("prism-react-renderer/themes/dracula");
 const config = {
   title: "Chao",
   tagline: "未来的事情无人知晓, 所以才有无限可能",
-  url: "https://your-docusaurus-test-site.com",
-  baseUrl: "/",
+  url: "https://xuhaichaoy.github.io",
+  baseUrl: "/doc/",
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
   favicon: "img/favicon.ico",
