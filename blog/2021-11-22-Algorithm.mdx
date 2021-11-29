@@ -137,3 +137,40 @@ function fn(arr) {
 }
 fn(arr);
 ```
+
+```js title="柯里化函数"
+// curryingAdd(1)(2)
+function curryingAdd(x) {
+  return function (y) {
+    return x + y;
+  };
+}
+curryingAdd(1)(2);
+```
+
+**手写 useReducer**
+
+:::tip
+
+需要注意的点
+
+- 1. reducer 函数和初始的状态值是用户自定义的
+- 2. reducer 函数接受两个参数分别是 state 和 action
+- 3. useReducer 函数接收用户自定义的 reducer 函数和初始的状态值
+- 4. 在 reducer 函数中调用到了 useState 这个钩子函数
+
+:::
+
+```jsx title="第一步, 使用useState获取到用户传递的初始状态值"
+const [state, setState] = useState(initialState);
+```
+
+```jsx title="第二步, 通过setState执行用户dispatch过来的action"
+const dispatch = (action) => {
+  setState(reducer(state, action));
+};
+```
+
+```jsx title="第三步, 返回一个数组数组的第一个参数是状态值，第二个状态值是设置这个状态的方法"
+return [state, dispatch];
+```

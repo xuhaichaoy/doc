@@ -1,0 +1,44 @@
+```js
+var a = 20;
+
+function bar() {
+  console.log(a);
+}
+
+function foo(fn) {
+  var a = 10;
+  fn();
+}
+
+foo(bar);
+
+// 答案: 20
+```
+
+```js
+function bar() {
+  var a = 20;
+  return function () {
+    console.log(a); // 20
+  };
+}
+
+var foo = bar();
+var a = 10;
+foo();
+
+// 答案: 20
+```
+
+```js
+var a = 20;
+
+function bar() {
+  console.log(a);
+  var a = 10;
+  console.log(a);
+}
+bar();
+
+// 答案: undefined 10
+```
