@@ -8,9 +8,9 @@
     <subtitle>Chao Blog</subtitle>
     <icon>https://xuhaichaoy.github.io/doc/img/favicon.ico</icon>
     <entry>
-        <title type="html"><![CDATA[作用域]]></title>
-        <id>作用域</id>
-        <link href="https://xuhaichaoy.github.io/doc/blog/2021/11/29/作用域"/>
+        <title type="html"><![CDATA[输出]]></title>
+        <id>输出</id>
+        <link href="https://xuhaichaoy.github.io/doc/blog/2021/11/29/输出"/>
         <updated>2021-11-29T00:00:00.000Z</updated>
         <content type="html"><![CDATA[<pre><code class="language-js">var a = 20;
 
@@ -69,7 +69,28 @@ runPromises()
   .catch((err) =&gt; console.log(err));
 
 // Third
+</code></pre><pre><code class="language-js">class A {
+  static a = 1; // 静态属性
+  b = 2; // 自有属性
+  fn() {} // 原型链方法
+  f = () =&gt; {}; // 自有方法
+}
+</code></pre><pre><code class="language-js">class A {
+  constructor() {
+    console.log(this)
+    console.log(this.name);
+  }
+}
+class B extends A {
+  constructor() {
+    super();
+    console.log(this)
+    this.name = &quot;B&quot;;
+  }
+}
+const b = new B();
 
+// undefined  B{}
 </code></pre>]]></content>
     </entry>
     <entry>
@@ -535,7 +556,8 @@ ES Moudle 是值的引用, 只读状态, 不能修改变量值, 不可以动态�
 单向数据流是什么意思? 就是某个节点被改变后, 只会影响一个方向上的其它节点.
 自上而下是什么意思? 数据变动只会影响下一个层级的节点, 不会影响上一个层级的节点.</p><p>单向数据流: 规范的数据流向, 数据由外层组件向内层组件进行传递和更新</p><p><strong>EventBus 实现原理</strong></p><p>EventBus 实际上就是通过实例化一个 Vue 实例, 然后通过该实例的 <code>$emit</code> 方法发送数据消息和 <code>$on</code> 方法接收数据消息.
 需要在生命周期内监听, 全局挂载</p><p><strong>v-model 实现</strong>
-只要在一个自定义组件内通过设置一个名为 value 的 prop，并且在数据发生变化时 $emit 一个带新值的 input 事件，就可以在该自定义组件中使用 v-model 进行双向绑定</p><p><strong>Proxy和defineProperty区别,性能 todo</strong></p><hr/>]]></content>
+只要在一个自定义组件内通过设置一个名为 value 的 prop，并且在数据发生变化时 $emit 一个带新值的 input 事件，就可以在该自定义组件中使用 v-model 进行双向绑定</p><p><strong>Proxy和defineProperty区别,性能 todo</strong></p><p><strong>Keep-alive原理</strong></p><p>keep-alive是Vue一个内置组件. 它能够将不活动的组件实例保存在内存中, 而不是将其销毁, 是一个抽象的组件, 不会渲染到真实的dom中, 也不会出现在父组件中.
+提供了 include 和 exclude 两个属性, 允许有条件进行缓存.</p>]]></content>
     </entry>
     <entry>
         <title type="html"><![CDATA[Nuxt]]></title>
@@ -663,43 +685,6 @@ export default async ({ isHMR, store }) =&gt; {
         <author>
             <name>Yangshun Tay</name>
             <uri>https://github.com/yangshun</uri>
-        </author>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[MDX Blog Post]]></title>
-        <id>mdx-blog-post</id>
-        <link href="https://xuhaichaoy.github.io/doc/blog/mdx-blog-post"/>
-        <updated>2021-08-01T00:00:00.000Z</updated>
-        <summary type="html"><![CDATA[Blog posts support Docusaurus Markdown features, such as MDX.]]></summary>
-        <content type="html"><![CDATA[<p>Blog posts support <a href="https://docusaurus.io/docs/markdown-features">Docusaurus Markdown features</a>, such as <a href="https://mdxjs.com/">MDX</a>.</p><p>:::tip</p><p>Use the power of React to create interactive blog posts.</p><pre><code class="language-js">&lt;button onClick={() =&gt; alert(&#x27;button clicked!&#x27;)}&gt;Click me!&lt;/button&gt;
-</code></pre><button>Click me!</button><p>:::</p>]]></content>
-        <author>
-            <name>Sébastien Lorber</name>
-            <uri>https://sebastienlorber.com</uri>
-        </author>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Long Blog Post]]></title>
-        <id>long-blog-post</id>
-        <link href="https://xuhaichaoy.github.io/doc/blog/long-blog-post"/>
-        <updated>2019-05-29T00:00:00.000Z</updated>
-        <summary type="html"><![CDATA[This is the summary of a very long blog post,]]></summary>
-        <content type="html"><![CDATA[<p>This is the summary of a very long blog post,</p><p>Use a <code>&lt;!--</code> <code>truncate</code> <code>--&gt;</code> comment to limit blog post size in the list view.</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>]]></content>
-        <author>
-            <name>Endilie Yacop Sucipto</name>
-            <uri>https://github.com/endiliey</uri>
-        </author>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[First Blog Post]]></title>
-        <id>first-blog-post</id>
-        <link href="https://xuhaichaoy.github.io/doc/blog/first-blog-post"/>
-        <updated>2019-05-28T00:00:00.000Z</updated>
-        <summary type="html"><![CDATA[Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet]]></summary>
-        <content type="html"><![CDATA[<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>]]></content>
-        <author>
-            <name>Gao Wei</name>
-            <uri>https://github.com/wgao19</uri>
         </author>
     </entry>
 </feed>
