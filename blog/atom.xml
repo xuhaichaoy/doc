@@ -48,6 +48,28 @@ function bar() {
 bar();
 
 // 答案: undefined 10
+</code></pre><pre><code class="language-js">var a = { name: &quot;Sam&quot; };
+var b = { name: &quot;Tom&quot; };
+var o = {};
+o[a] = 1;
+o[b] = 2;
+console.log(o[a]);
+// 2
+</code></pre><pre><code class="language-js">const promise1 = Promise.resolve(&quot;First&quot;);
+const promise2 = Promise.resolve(&quot;Second&quot;);
+const promise3 = Promise.reject(&quot;Third&quot;);
+const promise4 = Promise.resolve(&quot;Fourth&quot;);
+const runPromises = async () =&gt; {
+  const res1 = await Promise.all([promise1, promise2]);
+  const res2 = await Promise.all([promise3, promise4]);
+  return [res1, res2];
+};
+runPromises()
+  .then((res) =&gt; console.log(res))
+  .catch((err) =&gt; console.log(err));
+
+// Third
+
 </code></pre>]]></content>
     </entry>
     <entry>
@@ -435,6 +457,59 @@ curryingAdd(1)(2);
   setState(reducer(state, action));
 };
 </code></pre><pre><code class="language-jsx" metastring="title=&quot;第三步, 返回一个数组数组的第一个参数是状态值，第二个状态值是设置这个状态的方法&quot;" title="&quot;第三步,">return [state, dispatch];
+</code></pre><pre><code class="language-js" metastring="title=&quot;如何控制promise执行的并发数&quot;" title="&quot;如何控制promise执行的并发数&quot;">// promise在异步操作中经常遇到, 对多个并发异步过程的处理Promise自身有 Promise.all()
+// Promise.allSettled() Promise.race()等, 但都没有对并发数量进行控制,
+
+class Schedule {
+  constructor(maxNum) {
+    this.list = [];
+    this.maxNum = maxNum;
+    this.workingNum = 0;
+  }
+
+  add(promiseCreator) {
+    this.list.push(promiseCreator);
+  }
+
+  start() {
+    for (let index = 0; index &lt; this.maxNum; index += 1) {
+      this.doNext();
+    }
+  }
+
+  doNext() {
+    if (this.list.length &amp;&amp; this.workingNum &lt; this.maxNum) {
+      this.workingNum += 1;
+      const promise = this.list.shift();
+      promise().then(() =&gt; {
+        this.workingNum -= 1;
+        this.doNext();
+      });
+    }
+  }
+}
+
+const timeout = (time) =&gt;
+  new Promise((resolve) =&gt; {
+    setTimeout(resolve, time);
+  });
+
+const shedule = new Schedule(2);
+
+const addTask = (time, order) =&gt; {
+  schedule.add(() =&gt;
+    timeout(time).then(() =&gt; {
+      console.log(order);
+    })
+  );
+};
+
+addTask(1000, 1);
+addTask(500, 2);
+addTask(300, 3);
+addTask(400, 4);
+
+shedule.start();
 </code></pre>]]></content>
     </entry>
     <entry>
@@ -453,9 +528,14 @@ curryingAdd(1)(2);
  &lt;Concurrent&gt;
    &lt;h1&gt;xxx&lt;/h1&gt;
  &lt;/Concurrent&gt;
-</code></pre><p><strong>想立即获取 state 值</strong></p><ul><li>flushSync</li><li>addEventListener</li><li>serRimeout(() =&gt; {})</li></ul><h2>ES moudle 和 CommonJS 区别 todo</h2><ul><li><p>CommonJS 是对模块的浅拷贝，ES6 Moundle 是对模块的引用，即 ES6 Moudle 只存不读，不能改变其值，也就是指针指向不变，类似 const</p></li><li><p>import 的接口是 read-only（只读状态），不能修改变量值，不能改变指针指</p><p>向</p></li></ul><h2>useCallback UseMemo Memo 区别</h2><ul><li>React.memo 包裹以后，子组件只在 props 发生变化以后才会重新渲染。</li><li>useCallback 可以对函数缓存，父组件给子组件传值（值为函数 handleClick），由于 handleClick 是一个对象，每次重新渲染生成的 handleClick 都是新的，所以子组件依旧会渲染，这时候只能通过 useCallback 包裹</li><li>如果传递给自组建一个对象{a:1,b:2} 这时候需要使用 useMemo</li></ul><h2>HTTP 协议</h2><p><strong>Get 和 Post 请求的区别</strong></p><ul><li>应用场景: Get 请求一般用来获取数据, 一般 Get 请求用于对服务器资源不会产生影响; Post 请求一般用于对服务器产生影响的情景.</li><li>是否缓存: 浏览器一般会对 Get 请求缓存, 但很少对 Post 缓存</li><li>发送的报文格式: get 请求实体部分为空, post 为数据</li><li>安全性: get 请求会将参数拼接到 url 上, 相对于 post 不安全, 会被历史记录保留</li><li>请求长度: url 长度会被限制</li><li>参数类型: post 请求支持更多数据类型</li></ul><p><strong>HTTP1.0 和 HTTP1.1 区别</strong></p><ul><li>连接方面: http1.0 默认非持久连接, http1.1 持久连接. http1.1 通过持久连接使多个 http 复用同一个 TCP 连接, 避免建立连接时延.</li><li>资源请求方面: 1.0 不支持断点续传, 服务端发送完整对象. 1.1 加入了 range, 允许只请求部分资源,返回码 206</li><li>缓存方面: 1.0 使用 header if_modified-since、Expires 做为缓存标准. 1.1 使用 Etag、if-Match、if-None-Match 缓存头控制</li><li>1.1 新增 host 字段, 指定服务器域名. 1.0 认为每台服务器都绑定唯一 ip, 因此并没有传递主机名.</li><li>1.1 新增许多请求方法, put head options</li></ul><p><strong>Http1.1 和 Http2.0 区别</strong></p><ul><li>二进制协议 1.1 文本 + 二进制; 2.0 纯二进制</li><li>多路复用 仍复用 TCP 连接, 在同一个连接内, 客户端服务器都可以同时发送多个请求或回应, 不用按照顺序, 避免了队头阻塞</li><li>数据流 2.0 采用数据流, 数据包不按顺序发送, 数据包发送的时候必须标记数据流 ID</li><li>头信息压缩 1.1 协议不带状态, 每次请求必须携带所有信息, 2.0 头信息压缩 gzip/compress 压缩后发送; 另一方面客户端和服务器维护一个头信息表,所有字段存入,生成索引号,不发送相同字段</li><li>服务器推送 2.0 允许服务器主动向客户端发送资源. 提前给客户端推送必要资源.</li></ul><p>:::tip 队头阻塞
+</code></pre><p><strong>想立即获取 state 值</strong></p><ul><li>flushSync</li><li>addEventListener</li><li>serRimeout(() =&gt; {})</li></ul><h2>ES moudle 和 CommonJS 区别 todo</h2><ul><li><p>CommonJS 是对模块的浅拷贝，ES6 Moundle 是对模块的引用，即 ES6 Moudle 只存不读，不能改变其值，也就是指针指向不变，类似 const</p></li><li><p>import 的接口是 read-only（只读状态），不能修改变量值，不能改变指针</p><p>指</p></li></ul><p>CommonJS 是对值的拷贝, 可以修改导出的值, 可以动态引入, 代码发生在运行时, 混合导出, 使用 exports 导出单个值以后, 就不能在导出一个对象值, 只会修改 exports 的对象改变
+ES Moudle 是值的引用, 只读状态, 不能修改变量值, 不可以动态引入, 代码发生在编译时, 混合导出, 单个导出, 默认导出 互不影响</p><h2>useCallback UseMemo Memo 区别</h2><ul><li>React.memo 包裹以后，子组件只在 props 发生变化以后才会重新渲染。</li><li>useCallback 可以对函数缓存，父组件给子组件传值（值为函数 handleClick），由于 handleClick 是一个对象，每次重新渲染生成的 handleClick 都是新的，所以子组件依旧会渲染，这时候只能通过 useCallback 包裹</li><li>如果传递给自组建一个对象{a:1,b:2} 这时候需要使用 useMemo</li></ul><h2>HTTP 协议</h2><p><strong>Get 和 Post 请求的区别</strong></p><ul><li>应用场景: Get 请求一般用来获取数据, 一般 Get 请求用于对服务器资源不会产生影响; Post 请求一般用于对服务器产生影响的情景.</li><li>是否缓存: 浏览器一般会对 Get 请求缓存, 但很少对 Post 缓存</li><li>发送的报文格式: get 请求实体部分为空, post 为数据</li><li>安全性: get 请求会将参数拼接到 url 上, 相对于 post 不安全, 会被历史记录保留</li><li>请求长度: url 长度会被限制</li><li>参数类型: post 请求支持更多数据类型</li></ul><p><strong>HTTP1.0 和 HTTP1.1 区别</strong></p><ul><li>连接方面: http1.0 默认非持久连接, http1.1 持久连接. http1.1 通过持久连接使多个 http 复用同一个 TCP 连接, 避免建立连接时延.</li><li>资源请求方面: 1.0 不支持断点续传, 服务端发送完整对象. 1.1 加入了 range, 允许只请求部分资源,返回码 206</li><li>缓存方面: 1.0 使用 header if_modified-since、Expires 做为缓存标准. 1.1 使用 Etag、if-Match、if-None-Match 缓存头控制</li><li>1.1 新增 host 字段, 指定服务器域名. 1.0 认为每台服务器都绑定唯一 ip, 因此并没有传递主机名.</li><li>1.1 新增许多请求方法, put head options</li></ul><p><strong>Http1.1 和 Http2.0 区别</strong></p><ul><li>二进制协议 1.1 文本 + 二进制; 2.0 纯二进制</li><li>多路复用 仍复用 TCP 连接, 在同一个连接内, 客户端服务器都可以同时发送多个请求或回应, 不用按照顺序, 避免了队头阻塞</li><li>数据流 2.0 采用数据流, 数据包不按顺序发送, 数据包发送的时候必须标记数据流 ID</li><li>头信息压缩 1.1 协议不带状态, 每次请求必须携带所有信息, 2.0 头信息压缩 gzip/compress 压缩后发送; 另一方面客户端和服务器维护一个头信息表,所有字段存入,生成索引号,不发送相同字段</li><li>服务器推送 2.0 允许服务器主动向客户端发送资源. 提前给客户端推送必要资源.</li></ul><p>:::tip 队头阻塞
 队头阻塞是由 http 规定报文必须是一发一收,这就是一个串行队列, 请求没有优先级, 只有入队顺序.
-:::</p><p><strong>Https 和 Http 区别</strong></p><ul><li>https 需要 CA 证书, 费用较高</li><li>http 是超文本传输协议, 明文传输, https 是 SSL 加密传输协议</li><li>http 80 端口 https 443</li><li>http 连接无状态; https 有 SSL 加密传输, 身份验证 更安全</li></ul><p><strong>多张图片, 加载</strong></p><ul><li>1 下, 浏览器对一个域名下最大 TCP 连接为 6, 会请求多次. 可以通过多域名部署解决.加快速度</li><li>2 下, 瞬间加载多个资源, 多路复用, 可以发送多个请求</li></ul><p><strong>HTTP 协议的优点和缺点</strong></p><ul><li>简单快速</li><li>无连接</li><li>无状态</li><li>灵活</li></ul>]]></content>
+:::</p><p><strong>Https 和 Http 区别</strong></p><ul><li>https 需要 CA 证书, 费用较高</li><li>http 是超文本传输协议, 明文传输, https 是 SSL 加密传输协议</li><li>http 80 端口 https 443</li><li>http 连接无状态; https 有 SSL 加密传输, 身份验证 更安全</li></ul><p><strong>多张图片, 加载</strong></p><ul><li>1 下, 浏览器对一个域名下最大 TCP 连接为 6, 会请求多次. 可以通过多域名部署解决.加快速度</li><li>2 下, 瞬间加载多个资源, 多路复用, 可以发送多个请求</li></ul><p><strong>HTTP 协议的优点和缺点</strong></p><ul><li>简单快速</li><li>无连接</li><li>无状态</li><li>灵活</li></ul><p><strong>如何理解单向数据流</strong></p><ul><li>什么是数据流?</li><li>为什么是自上而下的</li><li>单向数据流是什么意思?</li><li>为什么是单向的? 不能是双向的数据流?</li><li>单向数据流有什么作用?</li></ul><p>数据流就是指数据在组件间的传递, 组件间的值传递.
+单向数据流是什么意思? 就是某个节点被改变后, 只会影响一个方向上的其它节点.
+自上而下是什么意思? 数据变动只会影响下一个层级的节点, 不会影响上一个层级的节点.</p><p>单向数据流: 规范的数据流向, 数据由外层组件向内层组件进行传递和更新</p><p><strong>EventBus 实现原理</strong></p><p>EventBus 实际上就是通过实例化一个 Vue 实例, 然后通过该实例的 <code>$emit</code> 方法发送数据消息和 <code>$on</code> 方法接收数据消息.
+需要在生命周期内监听, 全局挂载</p><p><strong>v-model 实现</strong>
+只要在一个自定义组件内通过设置一个名为 value 的 prop，并且在数据发生变化时 $emit 一个带新值的 input 事件，就可以在该自定义组件中使用 v-model 进行双向绑定</p><p><strong>Proxy和defineProperty区别,性能 todo</strong></p><hr/>]]></content>
     </entry>
     <entry>
         <title type="html"><![CDATA[Nuxt]]></title>
