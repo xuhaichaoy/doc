@@ -138,6 +138,20 @@ function fn(arr) {
 fn(arr);
 ```
 
+```js title="冒泡排序"
+// [1,2,3,1,3,54,12,4,1,43,5]
+const arr = [1, 2, 3, 1, 3, 54, 12, 4, 1, 43, 5];
+for (let i = 0; i < arr.length; i += 1) {
+  for (let j = 0; j < arr.length - 1 - i; j += 1) {
+    if (arr[j] > arr[j + 1]) {
+      let temp = arr[j + 1];
+      arr[j + 1] = arr[j];
+      arr[j] = temp;
+    }
+  }
+}
+```
+
 ```js title="柯里化函数"
 // curryingAdd(1)(2)
 function curryingAdd(x) {
@@ -173,4 +187,60 @@ const dispatch = (action) => {
 
 ```jsx title="第三步, 返回一个数组数组的第一个参数是状态值，第二个状态值是设置这个状态的方法"
 return [state, dispatch];
+```
+
+```js title="如何控制promise执行的并发数"
+// promise在异步操作中经常遇到, 对多个并发异步过程的处理Promise自身有 Promise.all()
+// Promise.allSettled() Promise.race()等, 但都没有对并发数量进行控制,
+
+class Schedule {
+  constructor(maxNum) {
+    this.list = [];
+    this.maxNum = maxNum;
+    this.workingNum = 0;
+  }
+
+  add(promiseCreator) {
+    this.list.push(promiseCreator);
+  }
+
+  start() {
+    for (let index = 0; index < this.maxNum; index += 1) {
+      this.doNext();
+    }
+  }
+
+  doNext() {
+    if (this.list.length && this.workingNum < this.maxNum) {
+      this.workingNum += 1;
+      const promise = this.list.shift();
+      promise().then(() => {
+        this.workingNum -= 1;
+        this.doNext();
+      });
+    }
+  }
+}
+
+const timeout = (time) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, time);
+  });
+
+const shedule = new Schedule(2);
+
+const addTask = (time, order) => {
+  schedule.add(() =>
+    timeout(time).then(() => {
+      console.log(order);
+    })
+  );
+};
+
+addTask(1000, 1);
+addTask(500, 2);
+addTask(300, 3);
+addTask(400, 4);
+
+shedule.start();
 ```
