@@ -672,6 +672,59 @@ export default async ({ isHMR, store }) =&gt; {
 </code></pre>]]></content>
     </entry>
     <entry>
+        <title type="html"><![CDATA[Vue]]></title>
+        <id>Vue</id>
+        <link href="https://xuhaichaoy.github.io/doc/blog/2021/11/20/Vue"/>
+        <updated>2021-11-20T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[如何开发 Vue 插件]]></summary>
+        <content type="html"><![CDATA[<p><strong>如何开发 Vue 插件</strong>
+Vue.use(Plugin)注册插件</p><pre><code class="language-js">// 引自官方api
+Vue.use(Plugin);
+
+// 参数: {Object | Function} Plugin
+
+// 用法:
+// 1. 安装 Vue.js 插件, 如果插件是一个对象, 必须提供 install 方法.
+// 2. 如果插件是一个函数, 它会被视为 install 方法.
+// 3. install 方法调用时, 会将 Vue 作为参数传入.
+
+// 该方法需要在调用 new Vue() 之前被调用.
+// 当 install 方法被同一个插件多次调用, 插件将只会被安装一次.
+</code></pre><pre><code class="language-vue" metastring="title=&quot;button.vue&quot;" title="&quot;button.vue&quot;">&lt;template&gt;
+  &lt;button&gt;&lt;slot&gt;&lt;/slot&gt;&lt;/button&gt;
+&lt;/template&gt;
+
+&lt;script&gt;
+export default {
+  name: &quot;CreateButton&quot;,
+};
+&lt;/script&gt;
+</code></pre><pre><code class="language-js" metastring="title=&quot;plugins/button/index.js&quot;" title="&quot;plugins/button/index.js&quot;">import CreateButton from &quot;./index&quot;;
+
+CreateButton.install = function (Vue) {
+  Vue.component(CreateButton.name, CreateButton);
+};
+
+export default CreateButton;
+</code></pre><pre><code class="language-js" metastring="title=&quot;main.js&quot;" title="&quot;main.js&quot;">import Vue from &quot;vue&quot;;
+import App from &quot;./App.vue&quot;;
+import CreateButton from &quot;./plugins/button/index.js&quot;;
+
+Vue.use(CreateButton);
+
+new Vue({
+  render: (h) =&gt; h(App),
+}).$mount(&quot;#app&quot;);
+</code></pre><pre><code class="language-vue">&lt;template&gt;
+  &lt;CreateButton&gt;button&lt;/CreateButton&gt;
+&lt;/template&gt;
+</code></pre><p><strong>Vue-router 核心原理</strong></p><ol><li><p>什么是前端路由
+在Web前端单页应用SPA中, 路由是URL与UI之间的映射关系, 这种映射是单向的, 即URL变化引起UI变化.</p></li><li><p>如何实现?
+改变URL 页面不刷新
+如何检测URL变化</p></li></ol><p>hash实现: hash是URL中#及后面的部分,改变URL中的hash不会引起页面刷新</p><p>通过hashchange监听URL变化, 改变URL方式有</p><ul><li>浏览器前进后退</li><li>通过<code>&lt;a&gt;</code>标签改变URL</li><li>通过window.location 改变URL</li></ul><p>history实现: history 提供了 pushState 和 replaceState 两个方法, 改变URL path不会刷新页面
+history 提供类似 hashchange 事件 popstate 事件,</p><ul><li>通过浏览器前进后退改变URL会触发 popstate</li><li>通过 pushState和replaceState或<code>&lt;a&gt;</code>不会触发popstate</li><li>我们可以拦截上述函数的调用和<code>&lt;a&gt;</code>的点击来检测url变化</li><li>通过js调用history go back forward触发事件</li></ul>]]></content>
+    </entry>
+    <entry>
         <title type="html"><![CDATA[Welcome]]></title>
         <id>welcome</id>
         <link href="https://xuhaichaoy.github.io/doc/blog/welcome"/>
