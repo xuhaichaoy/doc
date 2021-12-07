@@ -69,12 +69,12 @@ hash实现: hash是URL中#及后面的部分,改变URL中的hash不会引起页�
 
 通过hashchange监听URL变化, 改变URL方式有
 - 浏览器前进后退
-- 通过<a>标签改变URL
+- 通过`<a>`标签改变URL
 - 通过window.location 改变URL
 
 history实现: history 提供了 pushState 和 replaceState 两个方法, 改变URL path不会刷新页面
 history 提供类似 hashchange 事件 popstate 事件,
 - 通过浏览器前进后退改变URL会触发 popstate
-- 通过 pushState和replaceState或<a>不会触发popstate
-- 我们可以拦截上述函数的调用和<a>的点击来检测url变化
+- 通过 pushState和replaceState或`<a>`不会触发popstate
+- 我们可以拦截上述函数的调用和`<a>`的点击来检测url变化
 - 通过js调用history go back forward触发事件
