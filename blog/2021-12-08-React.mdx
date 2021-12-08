@@ -1,0 +1,69 @@
+**useEffect && useLayoutEffect**
+
+用法一致, 如果不传第二个参数, 只要该组件有 `state` 改变就会触发一次回调, 用 return 返回一个函数, 组件每次重新渲染都会先执行该函数
+区别:
+
+- `useEffect` 是异步调用 页面渲染后执行
+- `useLayoutEffect` 是同步调用 页面渲染前执行.
+
+**PureComponent**
+
+`PureComponent` 会浅比较, `props` 和 `state`是否相同, 来决定是否重新渲染组件, 所以一般用于性能调优,减少 render 次数
+
+**memo**
+
+`React.memo` 和 `PureComponent` 作用类似, 可以做性能优化, `React.memo`是高阶组件, 函数组件和类组件都能使用
+
+区别是:
+
+- `React.memo` 只能对 `props`情况确定是否渲染,
+- `PureComponent` 是针对 `props` 和 `state`
+
+memo 第二个参数 返回 true 组件不渲染, false 渲染
+shouldComponentUpdate 返回 true 渲染 false 不渲染
+
+## useCallback UseMemo Memo 区别
+
+- React.memo 包裹以后，子组件只在 props 发生变化以后才会重新渲染。
+- useCallback 可以对函数缓存，父组件给子组件传值（值为函数 handleClick），由于 handleClick 是一个对象，每次重新渲染生成的 handleClick 都是新的，所以子组件依旧会渲染，这时候只能通过 useCallback 包裹
+- 如果传递给自组建一个对象{a:1,b:2} 这时候需要使用 useMemo
+
+**setState 是同步还是异步的**
+
+- 如果是正常的情况下，也就是没有使用 Concurrent 组件，是同步更新的，但是不会立即获得最新的 state 值。因为调用 setState 只是单纯的将最新的状态放到 updateQueue 链表上，等这个点击事件（合成事件）结束后会触发一个回调函数，在这个回调函数中才会更新 state，以及重新渲染。
+- 当使用了 Concurrent 组件的时候，才是真正的异步更新模式。同样没法立即获得最新状态，并且在执行 React 更新和渲染的过程中，使用了真正的异步方式（postMessage）会放到 eventloop 中
+- 当使用了 flushSync 这个 api 的时候，React 更新渲染是完全同步的，会立即触发更新和渲染操作，可以获取到最新的状态
+
+```jsx
+ flushSync(() => {
+   this.setState({
+     data: 'xxx'
+   })
+ })
+
+ <Concurrent>
+   <h1>xxx</h1>
+ </Concurrent>
+```
+
+**想立即获取 state 值**
+
+- flushSync
+- addEventListener
+- serRimeout(() => {})
+
+**如何理解单向数据流**
+
+- 什么是数据流?
+- 为什么是自上而下的
+- 单向数据流是什么意思?
+- 为什么是单向的? 不能是双向的数据流?
+- 单向数据流有什么作用?
+
+数据流就是指数据在组件间的传递, 组件间的值传递.
+单向数据流是什么意思? 就是某个节点被改变后, 只会影响一个方向上的其它节点.
+自上而下是什么意思? 数据变动只会影响下一个层级的节点, 不会影响上一个层级的节点.
+
+单向数据流: 规范的数据流向, 数据由外层组件向内层组件进行传递和更新
+
+

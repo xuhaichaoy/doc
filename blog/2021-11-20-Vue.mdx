@@ -59,22 +59,39 @@ new Vue({
 **Vue-router 核心原理**
 
 1. 什么是前端路由
-在Web前端单页应用SPA中, 路由是URL与UI之间的映射关系, 这种映射是单向的, 即URL变化引起UI变化.
+   在 Web 前端单页应用 SPA 中, 路由是 URL 与 UI 之间的映射关系, 这种映射是单向的, 即 URL 变化引起 UI 变化.
 
 2. 如何实现?
-改变URL 页面不刷新
-如何检测URL变化
+   改变 URL 页面不刷新
+   如何检测 URL 变化
 
-hash实现: hash是URL中#及后面的部分,改变URL中的hash不会引起页面刷新
+hash 实现: hash 是 URL 中#及后面的部分,改变 URL 中的 hash 不会引起页面刷新
 
-通过hashchange监听URL变化, 改变URL方式有
+通过 hashchange 监听 URL 变化, 改变 URL 方式有
+
 - 浏览器前进后退
-- 通过`<a>`标签改变URL
-- 通过window.location 改变URL
+- 通过`<a>`标签改变 URL
+- 通过 window.location 改变 URL
 
-history实现: history 提供了 pushState 和 replaceState 两个方法, 改变URL path不会刷新页面
+history 实现: history 提供了 pushState 和 replaceState 两个方法, 改变 URL path 不会刷新页面
 history 提供类似 hashchange 事件 popstate 事件,
-- 通过浏览器前进后退改变URL会触发 popstate
-- 通过 pushState和replaceState或`<a>`不会触发popstate
-- 我们可以拦截上述函数的调用和`<a>`的点击来检测url变化
-- 通过js调用history go back forward触发事件
+
+- 通过浏览器前进后退改变 URL 会触发 popstate
+- 通过 pushState 和 replaceState 或`<a>`不会触发 popstate
+- 我们可以拦截上述函数的调用和`<a>`的点击来检测 url 变化
+- 通过 js 调用 history go back forward 触发事件
+
+**EventBus 实现原理**
+
+EventBus 实际上就是通过实例化一个 Vue 实例, 然后通过该实例的 `$emit` 方法发送数据消息和 `$on` 方法接收数据消息.
+需要在生命周期内监听, 全局挂载
+
+**v-model 实现**
+只要在一个自定义组件内通过设置一个名为 `value` 的 `prop`，并且在数据发生变化时 `$emit` 一个带新值的 input 事件，就可以在该自定义组件中使用 v-model 进行双向绑定
+
+**Proxy 和 defineProperty 区别,性能 todo**
+
+**Keep-alive 原理**
+
+`keep-alive`是 Vue 一个内置组件. 它能够将不活动的组件实例保存在内存中, 而不是将其销毁, 是一个抽象的组件, 不会渲染到真实的 dom 中, 也不会出现在父组件中.
+提供了 `include` 和 `exclude` 两个属性, 允许有条件进行缓存.
