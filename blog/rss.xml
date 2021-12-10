@@ -4,9 +4,30 @@
         <title>Chao Blog</title>
         <link>https://xuhaichaoy.github.io/doc/blog</link>
         <description>Chao Blog</description>
-        <lastBuildDate>Mon, 29 Nov 2021 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Wed, 08 Dec 2021 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
+        <item>
+            <title><![CDATA[React]]></title>
+            <link>https://xuhaichaoy.github.io/doc/blog/2021/12/08/React</link>
+            <guid>React</guid>
+            <pubDate>Wed, 08 Dec 2021 00:00:00 GMT</pubDate>
+            <description><![CDATA[useEffect && useLayoutEffect]]></description>
+            <content:encoded><![CDATA[<p><strong>useEffect &amp;&amp; useLayoutEffect</strong></p><p>用法一致, 如果不传第二个参数, 只要该组件有 <code>state</code> 改变就会触发一次回调, 用 return 返回一个函数, 组件每次重新渲染都会先执行该函数
+区别:</p><ul><li><code>useEffect</code> 是异步调用 页面渲染后执行</li><li><code>useLayoutEffect</code> 是同步调用 页面渲染前执行.</li></ul><p><strong>PureComponent</strong></p><p><code>PureComponent</code> 会浅比较, <code>props</code> 和 <code>state</code>是否相同, 来决定是否重新渲染组件, 所以一般用于性能调优,减少 render 次数</p><p><strong>memo</strong></p><p><code>React.memo</code> 和 <code>PureComponent</code> 作用类似, 可以做性能优化, <code>React.memo</code>是高阶组件, 函数组件和类组件都能使用</p><p>区别是:</p><ul><li><code>React.memo</code> 只能对 <code>props</code>情况确定是否渲染,</li><li><code>PureComponent</code> 是针对 <code>props</code> 和 <code>state</code></li></ul><p>memo 第二个参数 返回 true 组件不渲染, false 渲染
+shouldComponentUpdate 返回 true 渲染 false 不渲染</p><h2>useCallback UseMemo Memo 区别</h2><ul><li>React.memo 包裹以后，子组件只在 props 发生变化以后才会重新渲染。</li><li>useCallback 可以对函数缓存，父组件给子组件传值（值为函数 handleClick），由于 handleClick 是一个对象，每次重新渲染生成的 handleClick 都是新的，所以子组件依旧会渲染，这时候只能通过 useCallback 包裹</li><li>如果传递给自组建一个对象{a:1,b:2} 这时候需要使用 useMemo</li></ul><p><strong>setState 是同步还是异步的</strong></p><ul><li>如果是正常的情况下，也就是没有使用 Concurrent 组件，是同步更新的，但是不会立即获得最新的 state 值。因为调用 setState 只是单纯的将最新的状态放到 updateQueue 链表上，等这个点击事件（合成事件）结束后会触发一个回调函数，在这个回调函数中才会更新 state，以及重新渲染。</li><li>当使用了 Concurrent 组件的时候，才是真正的异步更新模式。同样没法立即获得最新状态，并且在执行 React 更新和渲染的过程中，使用了真正的异步方式（postMessage）会放到 eventloop 中</li><li>当使用了 flushSync 这个 api 的时候，React 更新渲染是完全同步的，会立即触发更新和渲染操作，可以获取到最新的状态</li></ul><pre><code class="language-jsx"> flushSync(() =&gt; {
+   this.setState({
+     data: &#x27;xxx&#x27;
+   })
+ })
+
+ &lt;Concurrent&gt;
+   &lt;h1&gt;xxx&lt;/h1&gt;
+ &lt;/Concurrent&gt;
+</code></pre><p><strong>想立即获取 state 值</strong></p><ul><li>flushSync</li><li>addEventListener</li><li>serRimeout(() =&gt; {})</li></ul><p><strong>如何理解单向数据流</strong></p><ul><li>什么是数据流?</li><li>为什么是自上而下的</li><li>单向数据流是什么意思?</li><li>为什么是单向的? 不能是双向的数据流?</li><li>单向数据流有什么作用?</li></ul><p>数据流就是指数据在组件间的传递, 组件间的值传递.
+单向数据流是什么意思? 就是某个节点被改变后, 只会影响一个方向上的其它节点.
+自上而下是什么意思? 数据变动只会影响下一个层级的节点, 不会影响上一个层级的节点.</p><p>单向数据流: 规范的数据流向, 数据由外层组件向内层组件进行传递和更新</p><p><strong>受控组件和非受控组件区别</strong></p><p>我们对某个组件状态的掌控, 他的值是否只能由用户设置, 而不能通过代码控制.</p>]]></content:encoded>
+        </item>
         <item>
             <title><![CDATA[输出]]></title>
             <link>https://xuhaichaoy.github.io/doc/blog/2021/11/29/输出</link>
@@ -540,24 +561,10 @@ shedule.start();
             <pubDate>Mon, 22 Nov 2021 00:00:00 GMT</pubDate>
             <description><![CDATA[浏览器从输入 url 到渲染页面，发生了什么]]></description>
             <content:encoded><![CDATA[<h2>浏览器从输入 url 到渲染页面，发生了什么</h2><ol><li><p>首先解析域名，利用 dns 服务器解析域名成 ip</p><ul><li><p>域名为什么要解析？</p><ul><li><p>首先域名只能是 字母+数字+一些特殊符号（就是不包含百分号、双引号）不转义会出歧义 ke=y=1</p></li><li><p>Utf-8 编码</p></li><li><p>encodeURL encodeURLComponent 编码</p></li></ul></li><li><p>dns 如何工作？</p><ul><li>首先会从本机的 hosts 文件查找，查找到返回，</li><li>然后从本机配置的 dns 服务器缓存查找</li><li>然后从根 DNS 服务器查找（全球 13 台）</li><li>然后试图解析.baidu.com 直到能解析</li></ul></li><li><p>前端 dns 优化</p><ul><li>html 页面头部写入 dns 缓存地址</li></ul></li></ul></li><li><p>拿到 ip 以后，建立 TCP 链接（三次握手以及后面的四次分手）</p><ul><li>为什么是三次两次不行？<ul><li>两次可能会出现 A =&gt; B，B 未收到，A 又发送给 B</li><li>A=&gt;B，A 未收到</li></ul></li><li>第一次握手：A 发送位码 SYN=1TCP 包给服务器，并且随机产生一个确认号，主机 B 收到 SYN 码知道 A 要建立连接</li><li>第二次握手：B 收到请求以后，向 A 发送确认号（主机 A 的确认码+1），SYN=1，SEQ=随机数的包</li><li>第三次握手：A 收到确认号检查是否正确，是否是第一次发送值+1，以及位码是否为 1，如果正确，A 会再次发送主机 B SEQ+1，ack=1 给 B，主机 B 收到以后建立成功</li></ul></li><li><p>然后是强缓存，协商缓存</p><ul><li>强缓存，cache-control：no-cache 直接进入协商缓存，如果在时间内命中强缓存，不发送请求直接本地缓存读取文件， 如果没有 cache-control 会读取 expires 对比是否过期</li><li>协商缓存，向服务器发送 if-None-match 和 if-modify-since 请求，服务器会比较 etag，相同，协商缓存，304；不一致，新资源+200+新的 etag</li></ul></li><li><p>拿到 html css js</p><ol><li>构建 DOM 树</li><li>构建 CSSOM 树</li><li>执行 JS</li><li>构建渲染树</li><li>渲染树</li><li>布局</li><li>绘制</li></ol></li><li><p>页面渲染优化</p></li></ol><h2>Vue 和 React 对比</h2><p><strong>Vue</strong> 的思想是响应式的，也就是基于数据可变，通过对每一个属性建立 Watcher 来监听，当属性发生变化的时候，响应式的更新对应的虚拟 DOM</p><p><strong>React</strong> 主张函数式编程，所以推崇纯组件，数据不可变，单向数据流</p><p>监听数据变化实现原理：</p><ul><li>Vue 通过 getter/setter 以及一些函数的劫持，能精确知道数据变化，不需要特别的优化就能达到很好的性能</li><li>React 通过比较引用的方式进行，如果不优化（PureCompont/shouldComponentUpdate）可能会导致大量不必要的 VDOM 重新渲染</li></ul><p>组件通信区别： jsx 和.vue 模版</p><ul><li>HOC 和 Mixins（Vue 中组合不用功能通过 mixin），React 通过高阶组件</li></ul><p>性能优化：</p><ul><li>React：shouldComponentUpdate</li><li>Vue：内部实现 shouldComponentUpdate 优化，由于依赖追踪系统，通过 watcher 判断是否需要重新渲染（页面数据量大时，性能较差）</li></ul><h2>Vuex 和 Redux 区别</h2><p><strong>Redux</strong> 使用的是不可变数据，<strong>Vuex</strong> 是可变的，每次都用新的 state 替换旧的，vuex 是直接修改</p><p>Redux 监测数据变化是通过 diff 比较差异，Vuex 原理与 vue 相同，通过 getter/setter 比较</p><h2>webpack</h2><p><strong>Plugin/Loader 区别</strong></p><p>:::note 区别</p><ul><li>Loader 是加载器 Webpack 将⼀切⽂件视为模块，但是 Webpack 原⽣是只能解析 JavaScript ⽂件，如果想将其他⽂件也打包的话，就会⽤到 Loader。 所以 Loader 的作⽤是让 Webpack 拥有了加载和解析非 JavaScript 文件的能力;</li><li>Plugin 是插件 Plugin 可以扩展 Webpack 的功能,让 Webpack 具有灵活性。在 Webpack 运⾏的⽣命周期中会⼴播出许多事件，Plugin 可以监听这些事件，在合适的时机通过 Webpack 提供的 API 改变输出结果。</li></ul><p>:::</p><p><strong>WebPack 中 bundle,chunk,module 的作用是什么</strong>
-:::note 区别</p><ul><li>bundle 是由 Webpack 打包出来的文件;</li><li>chunk 代码块,一个 chunk 由多个模块组合⽽成，⽤于代码的合并和分割;</li><li>module 是开发中的单个模块，在 Webpack 中⼀个模块对应⼀个⽂件，Webpack 会从配置的 entry 中递归开始找出所有依赖的模块。</li></ul><p>:::</p><p><strong>setState 是同步还是异步的</strong></p><ul><li>如果是正常的情况下，也就是没有使用 Concurrent 组件，是同步更新的，但是不会立即获得最新的 state 值。因为调用 setState 只是单纯的将最新的状态放到 updateQueue 链表上，等这个点击事件（合成事件）结束后会触发一个回调函数，在这个回调函数中才会更新 state，以及重新渲染。</li><li>当使用了 Concurrent 组件的时候，才是真正的异步更新模式。同样没法立即获得最新状态，并且在执行 React 更新和渲染的过程中，使用了真正的异步方式（postMessage）会放到 eventloop 中</li><li>当使用了 flushSync 这个 api 的时候，React 更新渲染是完全同步的，会立即触发更新和渲染操作，可以获取到最新的状态</li></ul><pre><code class="language-jsx"> flushSync(() =&gt; {
-   this.setState({
-     data: &#x27;xxx&#x27;
-   })
- })
-
- &lt;Concurrent&gt;
-   &lt;h1&gt;xxx&lt;/h1&gt;
- &lt;/Concurrent&gt;
-</code></pre><p><strong>想立即获取 state 值</strong></p><ul><li>flushSync</li><li>addEventListener</li><li>serRimeout(() =&gt; {})</li></ul><h2>ES moudle 和 CommonJS 区别 todo</h2><ul><li><p>CommonJS 是对模块的浅拷贝，ES6 Moundle 是对模块的引用，即 ES6 Moudle 只存不读，不能改变其值，也就是指针指向不变，类似 const</p></li><li><p>import 的接口是 read-only（只读状态），不能修改变量值，不能改变指针</p><p>指</p></li></ul><p>CommonJS 是对值的拷贝, 可以修改导出的值, 可以动态引入, 代码发生在运行时, 混合导出, 使用 exports 导出单个值以后, 就不能在导出一个对象值, 只会修改 exports 的对象改变
-ES Moudle 是值的引用, 只读状态, 不能修改变量值, 不可以动态引入, 代码发生在编译时, 混合导出, 单个导出, 默认导出 互不影响</p><h2>useCallback UseMemo Memo 区别</h2><ul><li>React.memo 包裹以后，子组件只在 props 发生变化以后才会重新渲染。</li><li>useCallback 可以对函数缓存，父组件给子组件传值（值为函数 handleClick），由于 handleClick 是一个对象，每次重新渲染生成的 handleClick 都是新的，所以子组件依旧会渲染，这时候只能通过 useCallback 包裹</li><li>如果传递给自组建一个对象{a:1,b:2} 这时候需要使用 useMemo</li></ul><h2>HTTP 协议</h2><p><strong>Get 和 Post 请求的区别</strong></p><ul><li>应用场景: Get 请求一般用来获取数据, 一般 Get 请求用于对服务器资源不会产生影响; Post 请求一般用于对服务器产生影响的情景.</li><li>是否缓存: 浏览器一般会对 Get 请求缓存, 但很少对 Post 缓存</li><li>发送的报文格式: get 请求实体部分为空, post 为数据</li><li>安全性: get 请求会将参数拼接到 url 上, 相对于 post 不安全, 会被历史记录保留</li><li>请求长度: url 长度会被限制</li><li>参数类型: post 请求支持更多数据类型</li></ul><p><strong>HTTP1.0 和 HTTP1.1 区别</strong></p><ul><li>连接方面: http1.0 默认非持久连接, http1.1 持久连接. http1.1 通过持久连接使多个 http 复用同一个 TCP 连接, 避免建立连接时延.</li><li>资源请求方面: 1.0 不支持断点续传, 服务端发送完整对象. 1.1 加入了 range, 允许只请求部分资源,返回码 206</li><li>缓存方面: 1.0 使用 header if_modified-since、Expires 做为缓存标准. 1.1 使用 Etag、if-Match、if-None-Match 缓存头控制</li><li>1.1 新增 host 字段, 指定服务器域名. 1.0 认为每台服务器都绑定唯一 ip, 因此并没有传递主机名.</li><li>1.1 新增许多请求方法, put head options</li></ul><p><strong>Http1.1 和 Http2.0 区别</strong></p><ul><li>二进制协议 1.1 文本 + 二进制; 2.0 纯二进制</li><li>多路复用 仍复用 TCP 连接, 在同一个连接内, 客户端服务器都可以同时发送多个请求或回应, 不用按照顺序, 避免了队头阻塞</li><li>数据流 2.0 采用数据流, 数据包不按顺序发送, 数据包发送的时候必须标记数据流 ID</li><li>头信息压缩 1.1 协议不带状态, 每次请求必须携带所有信息, 2.0 头信息压缩 gzip/compress 压缩后发送; 另一方面客户端和服务器维护一个头信息表,所有字段存入,生成索引号,不发送相同字段</li><li>服务器推送 2.0 允许服务器主动向客户端发送资源. 提前给客户端推送必要资源.</li></ul><p>:::tip 队头阻塞
+:::note 区别</p><ul><li>bundle 是由 Webpack 打包出来的文件;</li><li>chunk 代码块,一个 chunk 由多个模块组合⽽成，⽤于代码的合并和分割;</li><li>module 是开发中的单个模块，在 Webpack 中⼀个模块对应⼀个⽂件，Webpack 会从配置的 entry 中递归开始找出所有依赖的模块。</li></ul><p>:::</p><h2>ES moudle 和 CommonJS 区别 todo</h2><ul><li><p>CommonJS 是对模块的浅拷贝，ES6 Moundle 是对模块的引用，即 ES6 Moudle 只存不读，不能改变其值，也就是指针指向不变，类似 const</p></li><li><p>import 的接口是 read-only（只读状态），不能修改变量值，不能改变指针</p><p>指</p></li></ul><p>CommonJS 是对值的拷贝, 可以修改导出的值, 可以动态引入, 代码发生在运行时, 混合导出, 使用 exports 导出单个值以后, 就不能在导出一个对象值, 只会修改 exports 的对象改变
+ES Moudle 是值的引用, 只读状态, 不能修改变量值, 不可以动态引入, 代码发生在编译时, 混合导出, 单个导出, 默认导出 互不影响</p><h2>HTTP 协议</h2><p><strong>Get 和 Post 请求的区别</strong></p><ul><li>应用场景: Get 请求一般用来获取数据, 一般 Get 请求用于对服务器资源不会产生影响; Post 请求一般用于对服务器产生影响的情景.</li><li>是否缓存: 浏览器一般会对 Get 请求缓存, 但很少对 Post 缓存</li><li>发送的报文格式: get 请求实体部分为空, post 为数据</li><li>安全性: get 请求会将参数拼接到 url 上, 相对于 post 不安全, 会被历史记录保留</li><li>请求长度: url 长度会被限制</li><li>参数类型: post 请求支持更多数据类型</li></ul><p><strong>HTTP1.0 和 HTTP1.1 区别</strong></p><ul><li>连接方面: http1.0 默认非持久连接, http1.1 持久连接. http1.1 通过持久连接使多个 http 复用同一个 TCP 连接, 避免建立连接时延.</li><li>资源请求方面: 1.0 不支持断点续传, 服务端发送完整对象. 1.1 加入了 range, 允许只请求部分资源,返回码 206</li><li>缓存方面: 1.0 使用 header if_modified-since、Expires 做为缓存标准. 1.1 使用 Etag、if-Match、if-None-Match 缓存头控制</li><li>1.1 新增 host 字段, 指定服务器域名. 1.0 认为每台服务器都绑定唯一 ip, 因此并没有传递主机名.</li><li>1.1 新增许多请求方法, put head options</li></ul><p><strong>Http1.1 和 Http2.0 区别</strong></p><ul><li>二进制协议 1.1 文本 + 二进制; 2.0 纯二进制</li><li>多路复用 仍复用 TCP 连接, 在同一个连接内, 客户端服务器都可以同时发送多个请求或回应, 不用按照顺序, 避免了队头阻塞</li><li>数据流 2.0 采用数据流, 数据包不按顺序发送, 数据包发送的时候必须标记数据流 ID</li><li>头信息压缩 1.1 协议不带状态, 每次请求必须携带所有信息, 2.0 头信息压缩 gzip/compress 压缩后发送; 另一方面客户端和服务器维护一个头信息表,所有字段存入,生成索引号,不发送相同字段</li><li>服务器推送 2.0 允许服务器主动向客户端发送资源. 提前给客户端推送必要资源.</li></ul><p>:::tip 队头阻塞
 队头阻塞是由 http 规定报文必须是一发一收,这就是一个串行队列, 请求没有优先级, 只有入队顺序.
-:::</p><p><strong>Https 和 Http 区别</strong></p><ul><li>https 需要 CA 证书, 费用较高</li><li>http 是超文本传输协议, 明文传输, https 是 SSL 加密传输协议</li><li>http 80 端口 https 443</li><li>http 连接无状态; https 有 SSL 加密传输, 身份验证 更安全</li></ul><p><strong>多张图片, 加载</strong></p><ul><li>1 下, 浏览器对一个域名下最大 TCP 连接为 6, 会请求多次. 可以通过多域名部署解决.加快速度</li><li>2 下, 瞬间加载多个资源, 多路复用, 可以发送多个请求</li></ul><p><strong>HTTP 协议的优点和缺点</strong></p><ul><li>简单快速</li><li>无连接</li><li>无状态</li><li>灵活</li></ul><p><strong>如何理解单向数据流</strong></p><ul><li>什么是数据流?</li><li>为什么是自上而下的</li><li>单向数据流是什么意思?</li><li>为什么是单向的? 不能是双向的数据流?</li><li>单向数据流有什么作用?</li></ul><p>数据流就是指数据在组件间的传递, 组件间的值传递.
-单向数据流是什么意思? 就是某个节点被改变后, 只会影响一个方向上的其它节点.
-自上而下是什么意思? 数据变动只会影响下一个层级的节点, 不会影响上一个层级的节点.</p><p>单向数据流: 规范的数据流向, 数据由外层组件向内层组件进行传递和更新</p><p><strong>EventBus 实现原理</strong></p><p>EventBus 实际上就是通过实例化一个 Vue 实例, 然后通过该实例的 <code>$emit</code> 方法发送数据消息和 <code>$on</code> 方法接收数据消息.
-需要在生命周期内监听, 全局挂载</p><p><strong>v-model 实现</strong>
-只要在一个自定义组件内通过设置一个名为 value 的 prop，并且在数据发生变化时 $emit 一个带新值的 input 事件，就可以在该自定义组件中使用 v-model 进行双向绑定</p><p><strong>Proxy和defineProperty区别,性能 todo</strong></p><p><strong>Keep-alive原理</strong></p><p>keep-alive是Vue一个内置组件. 它能够将不活动的组件实例保存在内存中, 而不是将其销毁, 是一个抽象的组件, 不会渲染到真实的dom中, 也不会出现在父组件中.
-提供了 include 和 exclude 两个属性, 允许有条件进行缓存.</p>]]></content:encoded>
+:::</p><p><strong>Https 和 Http 区别</strong></p><ul><li>https 需要 CA 证书, 费用较高</li><li>http 是超文本传输协议, 明文传输, https 是 SSL 加密传输协议</li><li>http 80 端口 https 443</li><li>http 连接无状态; https 有 SSL 加密传输, 身份验证 更安全</li></ul><p><strong>多张图片, 加载</strong></p><ul><li>1 下, 浏览器对一个域名下最大 TCP 连接为 6, 会请求多次. 可以通过多域名部署解决.加快速度</li><li>2 下, 瞬间加载多个资源, 多路复用, 可以发送多个请求</li></ul><p><strong>HTTP 协议的优点和缺点</strong></p><ul><li>简单快速</li><li>无连接</li><li>无状态</li><li>灵活</li></ul><p><strong>浏览器渲染机制、重绘、重排</strong></p><p>网页生成过程:</p><ul><li>HTML被html解析器解析成<code>DOM</code>树</li><li>CSS被css解析器解析成<code>CSSOM</code>树</li><li>结合<code>DOM</code>树和<code>CSSOM</code>树, 生成一颗渲染树(<code>Render Tree</code>)</li><li>生成布局(<code>flow</code>), 即将所有渲染树的所有节点平面合成</li><li>将布局绘制(<code>paint</code>)</li></ul><p>重排一定会引起重绘, 重绘不一定重排</p>]]></content:encoded>
         </item>
         <item>
             <title><![CDATA[Nuxt]]></title>
@@ -719,10 +726,13 @@ new Vue({
   &lt;CreateButton&gt;button&lt;/CreateButton&gt;
 &lt;/template&gt;
 </code></pre><p><strong>Vue-router 核心原理</strong></p><ol><li><p>什么是前端路由
-在Web前端单页应用SPA中, 路由是URL与UI之间的映射关系, 这种映射是单向的, 即URL变化引起UI变化.</p></li><li><p>如何实现?
-改变URL 页面不刷新
-如何检测URL变化</p></li></ol><p>hash实现: hash是URL中#及后面的部分,改变URL中的hash不会引起页面刷新</p><p>通过hashchange监听URL变化, 改变URL方式有</p><ul><li>浏览器前进后退</li><li>通过<code>&lt;a&gt;</code>标签改变URL</li><li>通过window.location 改变URL</li></ul><p>history实现: history 提供了 pushState 和 replaceState 两个方法, 改变URL path不会刷新页面
-history 提供类似 hashchange 事件 popstate 事件,</p><ul><li>通过浏览器前进后退改变URL会触发 popstate</li><li>通过 pushState和replaceState或<code>&lt;a&gt;</code>不会触发popstate</li><li>我们可以拦截上述函数的调用和<code>&lt;a&gt;</code>的点击来检测url变化</li><li>通过js调用history go back forward触发事件</li></ul>]]></content:encoded>
+在 Web 前端单页应用 SPA 中, 路由是 URL 与 UI 之间的映射关系, 这种映射是单向的, 即 URL 变化引起 UI 变化.</p></li><li><p>如何实现?
+改变 URL 页面不刷新
+如何检测 URL 变化</p></li></ol><p>hash 实现: hash 是 URL 中#及后面的部分,改变 URL 中的 hash 不会引起页面刷新</p><p>通过 hashchange 监听 URL 变化, 改变 URL 方式有</p><ul><li>浏览器前进后退</li><li>通过<code>&lt;a&gt;</code>标签改变 URL</li><li>通过 window.location 改变 URL</li></ul><p>history 实现: history 提供了 pushState 和 replaceState 两个方法, 改变 URL path 不会刷新页面
+history 提供类似 hashchange 事件 popstate 事件,</p><ul><li>通过浏览器前进后退改变 URL 会触发 popstate</li><li>通过 pushState 和 replaceState 或<code>&lt;a&gt;</code>不会触发 popstate</li><li>我们可以拦截上述函数的调用和<code>&lt;a&gt;</code>的点击来检测 url 变化</li><li>通过 js 调用 history go back forward 触发事件</li></ul><p><strong>EventBus 实现原理</strong></p><p>EventBus 实际上就是通过实例化一个 Vue 实例, 然后通过该实例的 <code>$emit</code> 方法发送数据消息和 <code>$on</code> 方法接收数据消息.
+需要在生命周期内监听, 全局挂载</p><p><strong>v-model 实现</strong>
+只要在一个自定义组件内通过设置一个名为 <code>value</code> 的 <code>prop</code>，并且在数据发生变化时 <code>$emit</code> 一个带新值的 input 事件，就可以在该自定义组件中使用 v-model 进行双向绑定</p><p><strong>Proxy 和 defineProperty 区别,性能 todo</strong></p><p><strong>Keep-alive 原理</strong></p><p><code>keep-alive</code>是 Vue 一个内置组件. 它能够将不活动的组件实例保存在内存中, 而不是将其销毁, 是一个抽象的组件, 不会渲染到真实的 dom 中, 也不会出现在父组件中.
+提供了 <code>include</code> 和 <code>exclude</code> 两个属性, 允许有条件进行缓存.</p>]]></content:encoded>
         </item>
         <item>
             <title><![CDATA[Welcome]]></title>
