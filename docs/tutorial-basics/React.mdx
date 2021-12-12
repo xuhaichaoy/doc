@@ -1,4 +1,4 @@
-**useEffect && useLayoutEffect**
+## useEffect && useLayoutEffect
 
 用法一致, 如果不传第二个参数, 只要该组件有 `state` 改变就会触发一次回调, 用 return 返回一个函数, 组件每次重新渲染都会先执行该函数
 区别:
@@ -6,11 +6,11 @@
 - `useEffect` 是异步调用 页面渲染后执行
 - `useLayoutEffect` 是同步调用 页面渲染前执行.
 
-**PureComponent**
+## PureComponent
 
 `PureComponent` 会浅比较, `props` 和 `state`是否相同, 来决定是否重新渲染组件, 所以一般用于性能调优,减少 render 次数
 
-**memo**
+## memo
 
 `React.memo` 和 `PureComponent` 作用类似, 可以做性能优化, `React.memo`是高阶组件, 函数组件和类组件都能使用
 
@@ -28,7 +28,7 @@ shouldComponentUpdate 返回 true 渲染 false 不渲染
 - useCallback 可以对函数缓存，父组件给子组件传值（值为函数 handleClick），由于 handleClick 是一个对象，每次重新渲染生成的 handleClick 都是新的，所以子组件依旧会渲染，这时候只能通过 useCallback 包裹
 - 如果传递给自组建一个对象{a:1,b:2} 这时候需要使用 useMemo
 
-**setState 是同步还是异步的**
+## setState 是同步还是异步的
 
 - 如果是正常的情况下，也就是没有使用 Concurrent 组件，是同步更新的，但是不会立即获得最新的 state 值。因为调用 setState 只是单纯的将最新的状态放到 updateQueue 链表上，等这个点击事件（合成事件）结束后会触发一个回调函数，在这个回调函数中才会更新 state，以及重新渲染。
 - 当使用了 Concurrent 组件的时候，才是真正的异步更新模式。同样没法立即获得最新状态，并且在执行 React 更新和渲染的过程中，使用了真正的异步方式（postMessage）会放到 eventloop 中
@@ -46,13 +46,13 @@ shouldComponentUpdate 返回 true 渲染 false 不渲染
  </Concurrent>
 ```
 
-**想立即获取 state 值**
+## 想立即获取 state 值
 
 - flushSync
 - addEventListener
 - serRimeout(() => {})
 
-**如何理解单向数据流**
+## 如何理解单向数据流
 
 - 什么是数据流?
 - 为什么是自上而下的
@@ -66,6 +66,20 @@ shouldComponentUpdate 返回 true 渲染 false 不渲染
 
 单向数据流: 规范的数据流向, 数据由外层组件向内层组件进行传递和更新
 
-**受控组件和非受控组件区别**
+## 受控组件和非受控组件区别
 
 我们对某个组件状态的掌控, 他的值是否只能由用户设置, 而不能通过代码控制.
+
+在 React 中, 所谓受控组件和非受控组件, 是针对表单而言的.
+
+表单受控组件
+
+- 表单元素依赖状态, 表单元素需要默认值实时映射到状态的时候, 就是受控组件, 这个和双向绑定相似.
+- 受控组件, 表单元素的修改会实时映射到状态值上, 此时就可以对输入的内容进行校验.
+- 受控组件只有继承 `React.Component` 才会有状态
+- 受控组件必须要在表单上使用 `onChange` 事件来绑定对应的事件
+
+非受控组件
+
+- 非受控组件即不受状态的控制, 获取数据就是相当于操作 DOM
+- 非受控组件的好处是很容易和第三方组件结合
