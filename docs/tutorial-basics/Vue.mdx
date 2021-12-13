@@ -153,3 +153,69 @@ key 是 Vue 中 vnode 中唯一标记, 通过 key, diff 操作可以更准确, �
 ## Vuex 个人理解
 
 专门为 vue 提供的全局状态管理系统, 用于多个组件中 数据共享, 数据缓存. (无法持久化, 内部核心原理就是通过创造一个全局实例 new Vue)
+
+## Diff 算法原理
+
+:::tip 简介
+Diff 算法是一种对比算法. 对比 旧虚拟 DOM 和 新虚拟 DOM, 对比出哪个 虚拟节点改变, 找出虚拟节点, 并且更新这个虚拟节点对应的 真实节点, 实现精准的更新 DOM, 提高效率
+:::
+
+**Diff 同层对比**
+
+新旧需求 DOM 对比的时候, Diff 算法比较只在同层级进行, 不会跨层级比较. 所以 Diff 算法是: `深度优先算法`. 时间复杂度: `O(n)`
+
+![Docs Version Dropdown](/img/tutorial/diff同层对比.jpg)
+
+**Diff 对比流程**
+
+当数据改变时, 会触发 `setter`, 并且通过 `Dep.notify` 去通知所有的 `订阅者watcher`, 订阅者会调用 `patch方法`, 给真实 DOM 打补丁,更新对应的视图.
+
+`newVnode` 和 `oldVnode` 同层的新旧虚拟节点
+
+![Docs Version Dropdown](/img/tutorial/diff对比流程.jpg)
+
+**patch 方法**
+
+对比当前同层的虚拟节点是否为同一种类型的标签
+
+- 是: 继续执行 `patchVnode方法` 进行深层比对
+- 否: 没必要比对, 直接替换成 `新虚拟节点`
+
+```js title="patch 核心原理"
+function patch(oldVnode, newVnode) {
+  // 比较是否为同一类型节点
+  if (sameVnode(oldVnode, newVnode)) {
+    // 是 继续进行深层比较
+    patchVnode(oldVnode, newVnode);
+  } else {
+    // 否
+    const oldEl = oldVnode.el; // 旧虚拟节点的真实DOM节点
+    const parentEle = api.parentNode(oldEl); // 获取父节点
+    createEle(newVnode); // 创建新虚拟节点对应真实DOM节点
+    if (parentEle !== null) {
+      api.insertBefore(parentEle, vnode.el, api.nextSibling(oEl)); // 将新元素添加进父元素
+      api.removeChild(parentEle, oldVnode.el); // 移除以前的旧元素节点
+
+      // 设置null, 释放内存
+      oldVnode = null;
+    }
+  }
+  return newVnode;
+}
+```
+
+**sameVnode 方法**
+
+sameVnode 方法判断是否是同一类型节点
+
+```js
+function sameVnode(oldVnode, newVnode) {
+  return {
+    oldVnode.key === newVnode.key && // key值是否一样
+    oldVnode.tagName === newVnode.tagName && // 标签名是否一样
+    oldVnode.isComment === newVnode.isComment && // 是否都为注释节点
+    isDef(oldVnode.data) === isDef(newVnode.data) && // 是否都定义了data
+    sameInputType(oldVnode, newVnode) // 当标签为input时，type必须是否相同
+  }
+}
+```
