@@ -244,3 +244,68 @@ addTask(400, 4);
 
 shedule.start();
 ```
+
+```js title="两个有序数组合并成一个有序数组"
+var arr1 = [1, 2, 2, 3, 3, 4, 5, 6, 7, 8, 8];
+var arr2 = [1, 2, 2, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+var left1 = 0;
+var left2 = 0;
+var res = [];
+while (left1 < arr1.length || left2 < arr2.length) {
+  if (arr1[left1] && arr2[left2]) {
+    if (arr1[left1] > arr2[left2]) {
+      res.push(arr2[left2]);
+      left2++;
+    } else if (arr1[left1] < arr2[left2]) {
+      res.push(arr1[left1]);
+      left1++;
+    } else {
+      res.push(arr1[left1]);
+      res.push(arr1[left1]);
+      left1++;
+      left2++;
+    }
+  } else if (arr1[left1]) {
+    res.push(arr1[left1]);
+    left1++;
+  } else if (arr2[left2]) {
+    res.push(arr2[left2]);
+    left2++;
+  } else {
+    break;
+  }
+}
+console.log(res);
+```
+
+```js title="求一个数组中出现次数最多的几个值"
+var arr = [8, 1, 1, 1, 2, 3, 8, 3, 3, 4, 4, 5, 6, 8, 7, 7, 7];
+const obj = {};
+let res = [];
+let max = 0;
+for (var i = 0; i < arr.length; i++) {
+  if (obj[arr[i]]) {
+    obj[arr[i]]++;
+  } else {
+    obj[arr[i]] = 1;
+  }
+  max = Math.max(obj[arr[i]], max);
+}
+
+for (var key in obj) {
+  if (obj[key] === max) {
+    res.push(key);
+  }
+}
+
+console.log(res);
+```
+
+```js title="递归求阶乘"
+function fn(params) {
+  if (params === 1) {
+    return 1;
+  }
+  return params * fn(params - 1);
+}
+```
