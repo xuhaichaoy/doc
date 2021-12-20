@@ -83,3 +83,83 @@ shouldComponentUpdate 返回 true 渲染 false 不渲染
 
 - 非受控组件即不受状态的控制, 获取数据就是相当于操作 DOM
 - 非受控组件的好处是很容易和第三方组件结合
+
+## React 函数组件的 re-render 原理和优化
+
+对于函数组件的 re-render, 分为三种情况
+
+- 组件本身使用 `useState` 或 `useReducer` 更新, 引起的 re-render;
+- 父组件更新引起的 re-render
+- 组件本身是用了 `useContent`, `context` 更新引起的 re-render
+
+### 1. 组件本身使用 useState 或 useReducer 更新, 引起的 re-render
+
+#### 1.1 常规使用
+
+以计数组件为例, 如下每次点击 add, 都会打印 `counter render`, 表示引起了 re-render;
+
+```jsx
+const Counter = () => {
+  console.log("counter render");
+  const [count, addCount] = useState(0);
+  return (
+    <div>
+      <div>{count}</div>
+      <button onClick={() => addCount(count + 1)}>add</button>
+    </div>
+  );
+};
+```
+
+#### 1.2 immutation state
+
+下面我们将计数组件中的 state 改成引用类型, 如下, 发现并不会引起 re-render;
+
+```jsx
+const Counter = () => {
+  console.log("counter render");
+  const [count, addCount] = useState({ num: 0, time: Date.now() });
+  const clickHandler = () => {
+    count.num++;
+    count.time = Date.now();
+    addCount(count);
+  };
+
+  return (
+    <div>
+      <div>
+        {count.num} {count.time}
+      </div>
+      <button onClick={clickHandler}>add</button>
+    </div>
+  );
+};
+```
+
+原因在于, 更新 state 的时候, 会有一个新老 state 的比较, 用的是 `Object.is` 进行比较, 如果为 true 则直接返回不更新,
+源码如下(objectIs 会判断 `Object.is` 是否支持, 如果不支持则重新实现, eagerState 就是 oldState);
+
+```js
+if (objectIs(eagerState, currentState)) {
+  return;
+}
+```
+
+所以更新 state 时候要注意, state 为不可变数据, 每次更新都需要一个新值才会有效.
+
+#### 1.3 强制更新
+
+相比于类组件有个 `forceUpdate` 方法, 函数组件是没有该方法的, 但是其实也可以自己写一个, 如下, 由于 `Object.is({}, {})` 总是 `false`, 所以总能引起更新;
+
+```jsx
+const [, forceUpdate] = useState({});
+forceUpdate({});
+```
+
+说完 `useState` 的更新, 其实 `useReducer` 就不用说了, 源码里 `useState` 的更新调用的就是 `useReducer` 的更新
+
+```js
+function updateState(initialState) {
+  return updateReducer(basicStateReducer);
+}
+```
