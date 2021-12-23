@@ -163,3 +163,338 @@ function updateState(initialState) {
   return updateReducer(basicStateReducer);
 }
 ```
+
+### 2. 父组件更新引起子组件的 re-render
+
+#### 2.1 常规使用
+
+```jsx
+const Hello = ({ name }) => {
+  console.log("hello render");
+  return <div>hello {name}</div>;
+};
+
+const App = () => {
+  console.log("app render");
+  const [count, addCount] = useState(0);
+  return (
+    <div className="app">
+      <Hello name="react" />
+      <div className="counter-num">{count}</div>
+      <button
+        onClick={() => {
+          addCount(count + 1);
+        }}
+      >
+        add
+      </button>
+    </div>
+  );
+};
+```
+
+#### 2.2 优化组件设计
+
+##### 2.2.1 将更新部分抽离成单独组件
+
+可以将计数部分单独抽历程 `Counter` 组件, 这样计数组件的更新就影响不到 `Hello` 组件
+
+```jsx
+const Hello = ({ name }) => {
+  console.log("hello render");
+  return <div>hello {name}</div>;
+};
+
+const App = () => {
+  console.log("app render");
+  const [count, addCount] = useState(0);
+  return (
+    <div className="app">
+      <Hello name="react" />
+      <div className="counter-num">{count}</div>
+      <button
+        onClick={() => {
+          addCount(count + 1);
+        }}
+      >
+        add
+      </button>
+    </div>
+  );
+};
+```
+
+##### 2.2.2 将不需要 re-render 的部分抽离, 以插槽的形式渲染 (children)
+
+```jsx
+// App 组件预留 children 位
+const App = ({ children }) => {
+  console.log("app render");
+  const [count, addCount] = useState(0);
+  return (
+    <div className="app">
+      {children}
+      <div className="counter-num">{count}</div>
+      <button
+        onClick={() => {
+          addCount(count + 1);
+        }}
+      >
+        add
+      </button>
+    </div>
+  );
+};
+
+// 使用
+<App>
+  <Hello name="react" />
+</App>;
+```
+
+#### 2.3 React.memo
+
+对于是否需要 re-render, 类组件提供了两种方法: `PureComponent` 和 `shouldComponentUpdate` 生命周期方法.
+
+对于函数组件, 有一个 `React.memo` 方法, 可以用来决定是否需要 re-render, 我们将 `hello` 组件 memo 化, 这样点击更新数字的时候,
+`hello` 组件是不会 re-render, 除非 `hello` 组件 props 更新.
+
+```jsx
+const Hello = React.memo(({ name }) => {
+  console.log("hello render");
+  return <div>hello {name}</div>;
+});
+
+const App = () => {
+  console.log("app render");
+  const [count, addCount] = useState(0);
+  return (
+    <div className="app">
+      <Hello name="react" />
+      <div className="counter-num">{count}</div>
+      <button
+        onClick={() => {
+          addCount(count + 1);
+        }}
+      >
+        add
+      </button>
+    </div>
+  );
+};
+```
+
+memo 方法源码定义
+
+```js
+exportfunction memo<Props>(
+  type: React$ElementType, // react 自定义组件
+  compare?: (oldProps: Props, newProps: Props) => boolean, // 可选的比对函数，决定是否 re-render
+) {
+    ...
+    const elementType = {
+    $$typeof: REACT_MEMO_TYPE,
+    type,
+    compare: compare === undefined ? null : compare,
+  };
+    ...
+
+  return elementType;
+}
+
+```
+
+memo 的关键比对逻辑如下，如果有传入 compare 函数则使用 compare 函数决定是否需要 re-render，否则使用浅比较 `shallowEqual` 决定是否需要 re-render：
+
+```js
+var compare = Component.compare;
+compare = compare !== null ? compare : shallowEqual;
+
+if (compare(prevProps, nextProps) && current.ref === workInProgress.ref) {
+  return bailoutOnAlreadyFinishedWork(current, workInProgress, renderLanes);
+}
+```
+
+既然默认不传 compare 时，用的是浅对比，那么对于引用类的 props，就要注意了，
+尤其是事件处理的函数，如下，我们给 Hello 组件添加一个点击事件，
+这时我们发现每次点击计数，Hello 组件又开始 re-render 了：
+
+```js
+// 新增 onClick 处理函数
+const Hello = memo(({ name, onClick }) => {
+  console.log("hello render");
+  return <div onClick={onClick}>hello {name}</div>;
+});
+
+const App = ({ children }) => {
+  console.log("counter render");
+  const [count, addCount] = useState(0);
+
+  // 新增处理函数
+  const clickHandler = () => {
+    console.log("hello click");
+  };
+
+  return (
+    <div className="counter">
+      <Hello name="react" onClick={clickHandler} />
+      <div className="counter-num">{count}</div>
+      <button
+        onClick={() => {
+          addCount(count + 1);
+        }}
+      >
+        add
+      </button>
+    </div>
+  );
+};
+```
+
+这是因为每次点击计数，都会重新定义 clickHandler 处理函数，这样 shallowEqual 浅比较发现 onClick 属性值不同，于是将会进行 re-render。
+
+#### 2.3.1 useCallback
+
+这个时候我们可以使用 useCallback 将定义的函数缓存起来，如下就不会引起 re-render 了
+
+```js
+// 新增处理函数，使用 useCallback 缓存起来
+const clickHandler = useCallback(() => {
+  console.log("hello click");
+}, []);
+```
+
+useCallback 的原理主要是在挂载的时候，将定义的 callback 函数及 deps 依赖挂载该 hook 的 memoizedState，
+当更新时，将依赖进行对比，如果依赖没变，则直接返回老的 callback 函数，否则则更新新的 callback 函数及依赖：
+
+```js
+// 挂载时
+function mountCallback(callback, deps) {
+  var hook = mountWorkInProgressHook();
+  var nextDeps = deps === undefined ? null : deps;
+  hook.memoizedState = [callback, nextDeps];
+  return callback;
+}
+
+// 更新时
+function updateCallback(callback, deps) {
+  var hook = updateWorkInProgressHook();
+  var nextDeps = deps === undefined ? null : deps;
+  var prevState = hook.memoizedState;
+
+  if (prevState !== null) {
+    if (nextDeps !== null) {
+      var prevDeps = prevState[1];
+
+      // 如果依赖未变，则直接返回老的函数
+      if (areHookInputsEqual(nextDeps, prevDeps)) {
+        return prevState[0];
+      }
+    }
+  }
+  // 否则更新新的 callback 函数
+  hook.memoizedState = [callback, nextDeps];
+  return callback;
+}
+```
+
+看起来好像是没问题了，但是如果我们在刚才 callback 函数中使用了 count 这个 state 值呢？
+
+```jsx
+// 新增处理函数，使用 useCallback 缓存起来
+// 在 callback 函数中使用 count
+const clickHandler = useCallback(() => {
+  console.log("count: ", count);
+}, []);
+```
+
+当我们点击了几次计数，然后再点击 Hello 组件时，会发现我们打印的 count 还是挂载时候的值，
+而不是最新的 count 值。其实，这都是是闭包惹得祸。
+所以为了让 callback 函数中可以使用最新的 state，我们还要将该 state 放入 deps 依赖，但是这样依赖更新了，
+callback 函数也将会更新，于是 Hello 组件又将会 re-render，这又回到了从前。
+
+```jsx
+// 新增处理函数，使用 useCallback 缓存起来
+// 在 callback 函数中使用 count
+// 并将 count 添加进依赖
+// 只要 count 更新，callback 函数又将更新，useCallback 就没什么用了
+const clickHandler = useCallback(() => {
+  console.log("count: ", count);
+}, [count]);
+```
+
+这样我们得出了一个结论：当 callback 函数需要使用 state 值时，如果是 state 值更新引起的更新，useCallback 其实是没有任何效果的。
+
+##### 2.3.2 useRef & useEffect
+
+为了解决刚才的 useCallback 的闭包问题，我们换一个方式，引入 useRef 和 useEffect 来解决该问题：
+
+```jsx
+const App = ({ children }) => {
+  console.log("counter render");
+  const [count, addCount] = useState(0);
+
+  // 1、创建一个 countRef
+  const countRef = useRef(count);
+
+  // 2、依赖改成 countRef
+  // 浅对比 countRef 时，将不会引起 callback 函数更新
+  // callback 函数又中可以读取到 countRef.current 值，即 count 的最新值
+  const clickHandler = useCallback(() => {
+    console.log("count: ", countRef.current);
+  }, [countRef]);
+
+  // 3、当 count 更新时，更新 countRef 的值
+  useEffect(() => {
+    countRef.current = count;
+  }, [count]);
+
+  return (
+    <div className="counter">
+      <Hello name="react" onClick={clickHandler} />
+      <div className="counter-num">{count}</div>
+      <button
+        onClick={() => {
+          addCount(count + 1);
+        }}
+      >
+        add
+      </button>
+    </div>
+  );
+};
+```
+
+该方案总结如下：
+
+- 通过 useRef 来保存变化的值；
+- 通过 useEffect 来更新变化的值；
+- 通过 useCallback 来返回固定的 callback。
+
+`useRef` 保存值的原理如下：
+
+```js
+// 挂载 ref
+function mountRef(initialValue) {
+  var hook = mountWorkInProgressHook();
+
+  // 创建一个 ref 对象，将值挂在 current 属性上
+  var ref = {
+    current: initialValue,
+  };
+
+  {
+    Object.seal(ref);
+  }
+
+  // 将 ref 挂到 hook 的 memoizedState 属性上，并返回
+  hook.memoizedState = ref;
+  return ref;
+}
+
+// 更新 ref
+function updateRef(initialValue) {
+  var hook = updateWorkInProgressHook();
+  return hook.memoizedState; // 直接返回 ref
+}
+```
