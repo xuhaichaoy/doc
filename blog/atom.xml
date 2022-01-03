@@ -9,7 +9,7 @@
     <icon>https://xuhaichaoy.github.io/doc/img/favicon.ico</icon>
     <entry>
         <title type="html"><![CDATA[index]]></title>
-        <id>index</id>
+        <id>/index</id>
         <link href="https://xuhaichaoy.github.io/doc/blog/index"/>
         <updated>2021-12-10T15:18:33.031Z</updated>
         <summary type="html"><![CDATA[想想写啥]]></summary>
