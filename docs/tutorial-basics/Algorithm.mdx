@@ -1,3 +1,7 @@
+<!-- need to rearranging -->
+
+### 节流
+
 ```js title="节流"
 function throttle(fn, time = 300) {
   // 先点击生效
@@ -15,6 +19,8 @@ function throttle(fn, time = 300) {
 }
 ```
 
+### 防抖
+
 ```js title="防抖"
 function debounce(fn, time = 300) {
   // 后执行
@@ -27,6 +33,8 @@ function debounce(fn, time = 300) {
   };
 }
 ```
+
+### 深拷贝
 
 ```js title="深拷贝"
 function clone(target, map = new Map()) {
@@ -48,6 +56,8 @@ function clone(target, map = new Map()) {
   }
 }
 ```
+
+### 三数之和
 
 ```js title="三数之和"
 function threeSum(nums) {
@@ -83,6 +93,8 @@ function threeSum(nums) {
   return res;
 }
 ```
+
+### 三数之和 closest
 
 ```js title="三数之和 closest"
 function threeSumClosest(nums, target) {
@@ -125,6 +137,8 @@ function threeSumClosest(nums, target) {
 }
 ```
 
+### 数组扁平化去重排序
+
 ```js title="携程手写题"
 // 已知如下数组：
 // var arr = [ [1, 2, 2], [3, 4, 5, 5], [6, 7, 8, 9, [11, 12, [12, 13, [14] ] ] ], 10];
@@ -137,6 +151,8 @@ function fn(arr) {
 }
 fn(arr);
 ```
+
+### 冒泡排序
 
 ```js title="冒泡排序"
 // [1,2,3,1,3,54,12,4,1,43,5]
@@ -152,6 +168,8 @@ for (let i = 0; i < arr.length; i += 1) {
 }
 ```
 
+### 柯里化函数
+
 ```js title="柯里化函数"
 // curryingAdd(1)(2)
 function curryingAdd(x) {
@@ -162,7 +180,7 @@ function curryingAdd(x) {
 curryingAdd(1)(2);
 ```
 
-**手写 useReducer**
+### 手写 useReducer
 
 :::tip
 
@@ -188,6 +206,8 @@ const dispatch = (action) => {
 ```jsx title="第三步, 返回一个数组数组的第一个参数是状态值，第二个状态值是设置这个状态的方法"
 return [state, dispatch];
 ```
+
+### 如何控制 promise 执行的并发数
 
 ```js title="如何控制promise执行的并发数"
 // promise在异步操作中经常遇到, 对多个并发异步过程的处理Promise自身有 Promise.all()
@@ -245,6 +265,8 @@ addTask(400, 4);
 shedule.start();
 ```
 
+### 两个有序数组合并成一个有序数组
+
 ```js title="两个有序数组合并成一个有序数组"
 var arr1 = [1, 2, 2, 3, 3, 4, 5, 6, 7, 8, 8];
 var arr2 = [1, 2, 2, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -278,6 +300,8 @@ while (left1 < arr1.length || left2 < arr2.length) {
 console.log(res);
 ```
 
+### 求一个数组中出现次数最多的几个值
+
 ```js title="求一个数组中出现次数最多的几个值"
 var arr = [8, 1, 1, 1, 2, 3, 8, 3, 3, 4, 4, 5, 6, 8, 7, 7, 7];
 const obj = {};
@@ -301,6 +325,8 @@ for (var key in obj) {
 console.log(res);
 ```
 
+### 递归求阶乘
+
 ```js title="递归求阶乘"
 function fn(params) {
   if (params === 1) {
@@ -308,4 +334,121 @@ function fn(params) {
   }
   return params * fn(params - 1);
 }
+```
+
+### 手写 bind
+
+```js
+// bind实现要复杂一点  因为他考虑的情况比较多 还要涉及到参数合并(类似函数柯里化)
+Function.prototype.myBind = function (context, ...args) {
+  if (!context || context === null) {
+    context = window;
+  }
+  // 创造唯一的key值  作为我们构造的context内部方法名
+  let fn = Symbol();
+  context[fn] = this;
+  let _this = this;
+  //  bind情况要复杂一点
+  const result = function (...innerArgs) {
+    // 第一种情况 :若是将 bind 绑定之后的函数当作构造函数，通过 new 操作符使用，则不绑定传入的 this，而是将 this 指向实例化出来的对象
+    // 此时由于new操作符作用  this指向result实例对象  而result又继承自传入的_this 根据原型链知识可得出以下结论
+    // this.__proto__ === result.prototype   //this instanceof result =>true
+    // this.__proto__.__proto__ === result.prototype.__proto__ === _this.prototype; //this instanceof _this =>true
+    if (this instanceof _this === true) {
+      // 此时this指向指向result的实例  这时候不需要改变this指向
+      this[fn] = _this;
+      this[fn](...[...args, ...innerArgs]); //这里使用es6的方法让bind支持参数合并
+      delete this[fn];
+    } else {
+      // 如果只是作为普通函数调用  那就很简单了 直接改变this指向为传入的context
+      context[fn](...[...args, ...innerArgs]);
+      delete context[fn];
+    }
+  };
+  // 如果绑定的是构造函数 那么需要继承构造函数原型属性和方法
+  // 实现继承的方式: 使用Object.create
+  result.prototype = Object.create(this.prototype);
+  return result;
+};
+
+//用法如下
+
+// function Person(name, age) {
+//   console.log(name); //'我是参数传进来的name'
+//   console.log(age); //'我是参数传进来的age'
+//   console.log(this); //构造函数this指向实例对象
+// }
+// // 构造函数原型的方法
+// Person.prototype.say = function() {
+//   console.log(123);
+// }
+// let obj = {
+//   objName: '我是obj传进来的name',
+//   objAge: '我是obj传进来的age'
+// }
+// // 普通函数
+// function normalFun(name, age) {
+//   console.log(name);   //'我是参数传进来的name'
+//   console.log(age);   //'我是参数传进来的age'
+//   console.log(this); //普通函数this指向绑定bind的第一个参数 也就是例子中的obj
+//   console.log(this.objName); //'我是obj传进来的name'
+//   console.log(this.objAge); //'我是obj传进来的age'
+// }
+
+// 先测试作为构造函数调用
+// let bindFun = Person.myBind(obj, '我是参数传进来的name')
+// let a = new bindFun('我是参数传进来的age')
+// a.say() //123
+
+// 再测试作为普通函数调用
+// let bindFun = normalFun.myBind(obj, '我是参数传进来的name')
+//  bindFun('我是参数传进来的age')
+```
+
+### 手写 promise.all 和 race（京东）
+
+```js
+  //静态方法
+  static all(promiseArr) {
+    let result = [];
+    // 声明一个计数器 每一个promise返回就加一
+    let count = 0;
+    return new Mypromise((resolve, reject) => {
+      for (let i = 0; i < promiseArr.length; i++) {
+      // 这里用 Promise.resolve包装一下 防止不是Promise类型传进来
+        Promise.resolve(promiseArr[i]).then(
+          (res) => {
+            // 这里不能直接push数组  因为要控制顺序一一对应(感谢评论区指正)
+            result[i] = res;
+            count++;
+            // 只有全部的promise执行成功之后才resolve出去
+            if (count === promiseArr.length) {
+              resolve(result);
+            }
+          },
+          (err) => {
+            reject(err);
+          }
+        );
+      }
+    });
+  }
+  //静态方法
+  static race(promiseArr) {
+    return new Mypromise((resolve, reject) => {
+      for (let i = 0; i < promiseArr.length; i++) {
+        Promise.resolve(promiseArr[i]).then(
+          (res) => {
+            // promise数组只要有任何一个promise 状态变更  就可以返回
+            resolve(res);
+          },
+          (err) => {
+            reject(err);
+          }
+        );
+      }
+    });
+  }
+}
+
 ```

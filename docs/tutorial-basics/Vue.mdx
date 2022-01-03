@@ -66,7 +66,7 @@ new Vue({
    改变 URL 页面不刷新
    如何检测 URL 变化
 
-hash 实现: hash 是 URL 中#及后面的部分,改变 URL 中的 hash 不会引起页面刷新
+**hash 实现: hash 是 URL 中#及后面的部分, hash 虽然出现 URL 中，但不会被包含在 HTTP 请求中，对后端完全没有影响，因此改变 hash 不会重新加载页面**
 
 通过 hashchange 监听 URL 变化, 改变 URL 方式有
 
@@ -74,7 +74,12 @@ hash 实现: hash 是 URL 中#及后面的部分,改变 URL 中的 hash 不会�
 - 通过`<a>`标签改变 URL
 - 通过 window.location 改变 URL
 
-history 实现: history 提供了 pushState 和 replaceState 两个方法, 改变 URL path 不会刷新页面
+```js
+window.addEventListener("hashchange", funcRef, false);
+```
+
+**history 实现: history 提供了 pushState 和 replaceState 两个方法, 改变 URL path 不会刷新页面**
+
 history 提供类似 hashchange 事件 popstate 事件,
 
 - 通过浏览器前进后退改变 URL 会触发 popstate
