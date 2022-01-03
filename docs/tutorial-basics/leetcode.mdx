@@ -1,0 +1,96 @@
+### 997. Find the Town Judge
+
+You are given an array trust where trust[i] = [ai, bi] representing that the person labeled ai trusts the person labeled bi.
+
+Return the label of the town judge if the town judge exists and can be identified, or return -1 otherwise.
+
+**Example 1:**
+
+```
+Input: n = 3, trust = [[1,3],[2,3]]
+Output: 3
+```
+
+**Solution**
+
+```js
+/**
+ * @param {number} n
+ * @param {number[][]} trust
+ * @return {number}
+ */
+var findJudge = function (n, trust) {
+    // 获取 缺少的那个 节点
+    let arr = new Array(n).fill(0)
+    // 获取 都信任的那个 节点
+    let trusterArr = new Array(n).fill(0)
+
+    for (const [iterator, truster] of trust) {
+        arr[iterator - 1] ++  
+        trusterArr[truster - 1] ++ 
+    }
+
+    for(var i = 0; i < n; i++) {
+        if(arr[i] === 0 && trusterArr[i] === n - 1) {
+            return i + 1
+        }
+    }
+
+    return -1
+
+};
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * @param {number} n
+ * @param {number[][]} trust
+ * @return {number}
+ */
+var findJudge = function(n, trust) {
+    let arr = new Array(n).fill(0)
+    let arr1 = new Array(n).fill(0)
+    let truster = -1
+    for (let [persion, truster] of trust) {
+        arr[persion - 1] ++
+        arr1[truster - 1] ++
+    }
+    console.log(arr, arr1)
+    for(var i = 0; i < n; i++) {
+        if(arr[i] === 0 && arr1[i] === n-1) {
+            return i + 1
+        }
+    }
+    return truster
+};
