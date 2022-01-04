@@ -1,4 +1,6 @@
-### 997. Find the Town Judge Esay
+### 997. Find the Town Judge Easy
+
+time: 2022-01-03
 
 You are given an array trust where trust[i] = [ai, bi] representing that the person labeled ai trusts the person labeled bi.
 
@@ -41,6 +43,8 @@ var findJudge = function (n, trust) {
 ```
 
 ### 1010. Pairs of Songs With Total Durations Divisible by 60 Medium
+
+time: 2022-01-02
 
 You are given a list of songs where the ith song has a duration of time[i] seconds.
 
@@ -85,6 +89,8 @@ var numPairsDivisibleBy60 = function (time) {
 ```
 
 ### 1026. Maximum Difference Between Node and Ancestor Medium
+
+time: 2022-01-03
 
 Given the root of a binary tree, find the maximum value v for which there exist different nodes a and b where v = |a.val - b.val| and a is an ancestor of b.
 
@@ -131,5 +137,41 @@ const fn = (node, curMax, curMin) => {
   const right = fn(node.right, curMax, curMin);
 
   return Math.max(left, right);
+};
+```
+
+### 1009. Complement of Base 10 Integer Easy
+
+time: 2022-01-04
+
+The complement of an integer is the integer you get when you flip all the 0's to 1's and all the 1's to 0's in its binary representation.
+
+For example, The integer 5 is "101" in binary and its complement is "010" which is the integer 2.
+Given an integer n, return its complement.
+
+**Example 1:**
+
+```
+Input: n = 5
+Output: 2
+Explanation: 5 is "101" in binary, with complement "010" in binary, which is 2 in base-10.
+```
+
+**Solution**
+
+```js
+/**
+ * @param {number} n
+ * @return {number}
+ */
+var bitwiseComplement = function (n) {
+  return Number.parseInt(
+    n
+      .toString(2)
+      .split("")
+      .map((item) => (item === "1" ? 0 : 1))
+      .join(""),
+    2
+  );
 };
 ```

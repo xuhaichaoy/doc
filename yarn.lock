@@ -1973,7 +1973,7 @@
 
 "@docusaurus/core@2.0.0-beta.14", "@docusaurus/core@^2.0.0-beta.14":
   version "2.0.0-beta.14"
-  resolved "https://registry.npmmirror.com/@docusaurus/core/download/@docusaurus/core-2.0.0-beta.14.tgz#9baf8fbfe29f444f985616013b5d80435ea5f29e"
+  resolved "http://172.16.67.233:8081/repository/npm-group/@docusaurus/core/-/core-2.0.0-beta.14.tgz#9baf8fbfe29f444f985616013b5d80435ea5f29e"
   integrity sha512-dW95WbD+WE+35Ee1RYIS1QDcBhvUxUWuDmrWr1X0uH5ZHIeOmOnsGVjjn4FA8VN2MkF0uuWknmRakQmJk0KMZw==
   dependencies:
     "@babel/core" "^7.16.0"
@@ -2094,7 +2094,7 @@
 
 "@docusaurus/module-type-aliases@^2.0.0-beta.14":
   version "2.0.0-beta.14"
-  resolved "https://registry.npmmirror.com/@docusaurus/module-type-aliases/download/@docusaurus/module-type-aliases-2.0.0-beta.14.tgz#8a11f9c4a408d8e8cc4cb59ba81a28ecc629256a"
+  resolved "http://172.16.67.233:8081/repository/npm-group/@docusaurus/module-type-aliases/-/module-type-aliases-2.0.0-beta.14.tgz#8a11f9c4a408d8e8cc4cb59ba81a28ecc629256a"
   integrity sha512-jlSwYoRVeNxvmjbVil35mRVSXZdOmEM95Sph7NxC6IE/ceT1a8s4tpzI2xUMsGgSfLBldqhkXe+WSOYqUL7x3w==
   dependencies:
     "@docusaurus/types" "2.0.0-beta.14"
@@ -2208,7 +2208,7 @@
 
 "@docusaurus/preset-classic@^2.0.0-beta.14":
   version "2.0.0-beta.14"
-  resolved "https://registry.npmmirror.com/@docusaurus/preset-classic/download/@docusaurus/preset-classic-2.0.0-beta.14.tgz#128026fb201fdc6271614587ca09187bc83d930a"
+  resolved "http://172.16.67.233:8081/repository/npm-group/@docusaurus/preset-classic/-/preset-classic-2.0.0-beta.14.tgz#128026fb201fdc6271614587ca09187bc83d930a"
   integrity sha512-43rHA6wM4FcbHLPiBpqY4VSUjUXOWvW/N4q0wvf1LMoPH25lUzIaldpjD3Unzq5+UCYCFES24ktl58QOh7PB2g==
   dependencies:
     "@docusaurus/core" "2.0.0-beta.14"
