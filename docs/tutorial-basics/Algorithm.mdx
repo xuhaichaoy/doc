@@ -309,3 +309,29 @@ function fn(params) {
   return params * fn(params - 1);
 }
 ```
+
+```js title="5 求二进制 然后求反码对应的十进制"
+function fn(num) {
+  return parseInt(
+    num
+      .toString(2)
+      .split("")
+      .map((item) => (item === "0" ? "1" : "0"))
+      .join(""),
+    2
+  );
+}
+```
+
+```js title="求链表中间位"
+function fn(head) {
+  var quick = head
+  var slow = head
+  while(quick !=== null && quick.next !== null) {
+    quick = quick.next.next
+    slow = slow.next
+  }
+  return slow
+}
+
+```

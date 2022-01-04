@@ -188,8 +188,19 @@ router: {
 1. ios safari 浏览器 默认屏蔽 window.open 写一个 a 标签触发 a
 2. swiper 在 nuxt 使用的时候 需要将 swiper 设置为 client, ssr:false, 并且 swiper 需要用 client-only 包裹
 3. props 传参不能用解构赋值, 需要用 watch 监听 props.xxx ,否则数据不会变化
+4. devtools 默认 prod 会禁用, 由于使用了 cross-env 修改 `NODE_ENV` 导致 devtools 默认配置不会生效
 
 :::
+
+```javascript
+ vue: {
+    config: {
+      productionTip: process.env.NODE_ENV === 'dev',
+      devtools: process.env.NODE_ENV === 'dev',
+    },
+  },
+```
+
 **兼容性处理 browserslist**
 
 **节流防抖**
