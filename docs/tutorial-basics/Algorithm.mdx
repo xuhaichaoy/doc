@@ -144,7 +144,8 @@ function threeSumClosest(nums, target) {
 // var arr = [ [1, 2, 2], [3, 4, 5, 5], [6, 7, 8, 9, [11, 12, [12, 13, [14] ] ] ], 10];
 // 编写一个程序将数组扁平化去并除其中重复部分数据，最终得到一个升序且不重复的数组
 
-var arr = [[1, 2, 2], [3, 4, 5, 5], [6, 7, 8, 9, [11, 12, [12, 13, [14]]]], 10];
+var arr = [[1, 2, 2], [3, 4, 5, 5], [6, 7, 8, 9, [1
+1, 12, [12, 13, [14]]]], 10];
 
 function fn(arr) {
   return Array.from(new Set(arr.flat(Infinity))).sort((a, b) => a - b);
@@ -433,7 +434,7 @@ Function.prototype.myBind = function (context, ...args) {
       // 这里用 Promise.resolve包装一下 防止不是Promise类型传进来
         Promise.resolve(promiseArr[i]).then(
           (res) => {
-            // 这里不能直接push数组  因为要控制顺序一一对应(感谢评论区指正)
+            // 这里不能直接push数组  因为要控制顺序一一对应
             result[i] = res
             count++;
             // 只有全部的promise执行成功之后才resolve出去
@@ -467,3 +468,158 @@ Function.prototype.myBind = function (context, ...args) {
 }
 
 ```
+
+### 实现一个寄生组合继承
+
+```js
+  function Parent(name) {
+    this.name = name;
+    this.say = () => {
+      console.log(111);
+    }
+  }
+
+  Parent.prototype.play = () => {
+    console.log(2)
+  }
+
+  function Children(name) {
+    Parent.call(this);
+    this.name = name;
+  }
+
+  Children.prototype = Object.create(Parent.prototype);
+  Children.prototype.constructor = Children;
+
+  // let child = new Children("111");
+  // // console.log(child.name);
+  // // child.say();
+  // // child.play();
+```
+
+### 实现一个 new 操作符
+
+```js
+  function myNew(fn, ...args) {
+    let obj = Object.create(fn.prototype);
+    let res = fn.call(obj, ...args);
+    if(res && (typeof res === 'object') || typeof res === 'function') {
+      return res;
+    }
+    return obj;
+  }
+
+  // // function Person(name, age) {
+  // //   this.name = name;
+  // //   this.age = age;
+  // // }
+  // // Person.prototype.say = function() {
+  // //   console.log(this.age);
+  // // };
+  // // let p1 = myNew(Person, "lihua", 18);
+  // // console.log(p1.name);
+  // // console.log(p1);
+  // // p1.say();
+```
+
+### 用setTimeout 模拟 setInterval （阿里）
+
+```js
+  function mySetInterval(fn, time = 1000) {
+    let timer = null;
+    let isClear = false;
+    function interval () {
+      if(isClear) {
+        isClear = false;
+        clearTimeout(timer);
+        return;
+      }
+      fn();
+      timer = setTimeout(interval, time);
+    }
+    timer = setTimeout(interval, time);
+    return () => {
+      isClear = true;
+    }
+  }
+
+  // let a = mySetInterval(() => {
+  //   console.log(111);
+  // }, 1000)
+  // let cancel = mySetInterval(() => {
+  //   console.log(222)
+  // }, 1000)
+  // cancel()
+```
+
+### 实现发布订阅模式 （字节）
+
+```js
+  class EventEmitter {
+    constructor() {
+      this.events = {};
+    }
+
+    // 实现订阅
+    on(type, callBack) {
+      if(!this.events[type]) {
+        this.events[type] = [callBack];
+      } else {
+        this.events[type].push(callBack);
+      }
+    }
+
+    // 删除订阅
+    off(type, callBack) {
+      if(!this.events[type]) return;
+      this.events[type] = this.events[type].filter((item) => {
+        return item !== callBack;
+      });
+    }
+
+    // 只执行一次订阅事件
+    once(type, callBack) {
+      function fn() {
+        callBack();
+        this.off(type, fn);
+      }
+      this.on(type, fn);
+    }
+
+    // 触发事件
+    emit(type, ...rest) {
+      this.events[type] && this.events[type].forEach((fn) => fn.apply(this, rest));
+    }
+  }
+
+  // 使用如下
+  // const event = new EventEmitter();
+
+  // const handle = (...rest) => {
+  //   console.log(rest);
+  // };
+
+  // event.on("click", handle);
+
+  // event.emit("click", 1, 2, 3, 4);
+
+  // event.off("click", handle);
+
+  // event.emit("click", 1, 2);
+
+  // event.once("dbClick", () => {
+  //   console.log(123456);
+  // });
+  // event.emit("dbClick");
+  // event.emit("dbClick");
+```
+
+
+
+
+
+
+
+
+
+
