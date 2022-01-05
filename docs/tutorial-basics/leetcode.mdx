@@ -175,3 +175,63 @@ var bitwiseComplement = function (n) {
   );
 };
 ```
+
+### 131. Palindrome Partitioning Medium
+
+2022-01-05
+
+Given a string s, partition s such that every substring of the partition is a palindrome. Return all possible palindrome partitioning of s.
+
+A palindrome string is a string that reads the same backward as forward.
+
+**Example 1:**
+
+```
+Input: s = "aab"
+Output: [["a","a","b"],["aa","b"]]
+
+Input: s = "a"
+Output: [["a"]]
+```
+
+**Solution**
+
+```js
+/**
+ * @param {string} s
+ * @return {string[][]}
+ */
+var partition = function(s) {
+  if(s.length === 1) return [[s]]
+  let resultArr = new Array();
+  
+  function helper(s, partitionedArr, index){
+    if(index === s.length){
+     resultArr.push([...partitionedArr]);
+     return;
+    }
+    for(let i = index; i < s.length; i++){
+      if(isPalindrome(s, index , i)){    // passing in index as 'left' and i as 'right', as i tends to move faster because of loop increment
+        //choose
+        partitionedArr.push(s.slice(index, i + 1));
+        //explore
+        helper(s, partitionedArr, i+1);   // keeping index = i + 1, as it will help in moving one step forward in the 's'
+        //unchoose
+        partitionedArr.pop();          
+      }
+    }
+  }
+  
+  helper(s, new Array(), 0);
+  return resultArr;
+};
+
+function isPalindrome(s, left, right){
+  while(left < right){
+    if(s[left] != s[right]) return false;
+    left++;
+    right--;
+  }
+  return true;
+}
+```
