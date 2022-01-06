@@ -235,3 +235,48 @@ function isPalindrome(s, left, right){
   return true;
 }
 ```
+
+### 1094. Car Pooling Medium
+
+2022-01-06
+
+There is a car with capacity empty seats. The vehicle only drives east (i.e., it cannot turn around and drive west).
+
+You are given the integer capacity and an array trips where trip[i] = [numPassengersi, fromi, toi] indicates that the ith trip has numPassengersi passengers and the locations to pick them up and drop them off are fromi and toi respectively. The locations are given as the number of kilometers due east from the car's initial location.
+
+Return true if it is possible to pick up and drop off all passengers for all the given trips, or false otherwise.
+
+**Example 1:**
+
+```
+Input: trips = [[2,1,5],[3,3,7]], capacity = 4
+Output: false
+
+Input: trips = [[2,1,5],[3,3,7]], capacity = 5
+Output: true
+```
+
+**Solution**
+
+```js
+/**
+ * @param {number[][]} trips
+ * @param {number} capacity
+ * @return {boolean}
+ */
+var carPooling = function(trips, capacity) {
+    if(trips.length === 1) {
+        return capacity >= trips[0][0]
+    }
+    let arr = new Array(1000).fill(0)
+    for(var i = 0; i < trips.length; i++) {
+        for(var j = trips[i][1]; j < trips[i][2]; j++) {
+            arr[j] += trips[i][0];
+            if(arr[j] > capacity) {
+                return false
+            }
+        }
+    }
+    return true
+};
+```
