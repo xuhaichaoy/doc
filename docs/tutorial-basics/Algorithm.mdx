@@ -614,7 +614,30 @@ Function.prototype.myBind = function (context, ...args) {
   // event.emit("dbClick");
 ```
 
+```js
+// 执行并发数 [1,2,3,4,5,6,7,8,9,10]
 
+function send(promiseArr, max = 3) {
+  // body...
+  let currentNum = 0
+  for(var i = 0; i < max; i++) {
+    currentNum++
+    next()
+  }
+
+  function next() {
+    if(currentNum < max) {
+      const promise = promiseArr.shift()
+      promise().final(() => {
+        currentNum --;
+        next()
+      })
+    }
+    
+  }
+}
+
+```
 
 
 
