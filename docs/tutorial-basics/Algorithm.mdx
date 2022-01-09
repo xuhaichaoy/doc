@@ -266,6 +266,28 @@ addTask(400, 4);
 shedule.start();
 ```
 
+### 最大并发为3, 输出保持输入顺序  (主线)
+
+```js
+function send(promiseArr, max = 3) {
+  let currentNum = 0
+  for(var i = 0; i < max; i++) {
+    currentNum += 1
+    next()
+  }
+
+  function next() {
+    if(currentNum < max) {
+      const promise = promiseArr.shift()
+      promise().then(() => {
+        currentNum -= 1
+        next()
+      })
+    }
+  }
+}
+```
+
 ### 两个有序数组合并成一个有序数组
 
 ```js title="两个有序数组合并成一个有序数组"
