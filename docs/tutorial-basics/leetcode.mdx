@@ -201,34 +201,35 @@ Output: [["a"]]
  * @param {string} s
  * @return {string[][]}
  */
-var partition = function(s) {
-  if(s.length === 1) return [[s]]
+var partition = function (s) {
+  if (s.length === 1) return [[s]];
   let resultArr = new Array();
-  
-  function helper(s, partitionedArr, index){
-    if(index === s.length){
-     resultArr.push([...partitionedArr]);
-     return;
+
+  function helper(s, partitionedArr, index) {
+    if (index === s.length) {
+      resultArr.push([...partitionedArr]);
+      return;
     }
-    for(let i = index; i < s.length; i++){
-      if(isPalindrome(s, index , i)){    // passing in index as 'left' and i as 'right', as i tends to move faster because of loop increment
+    for (let i = index; i < s.length; i++) {
+      if (isPalindrome(s, index, i)) {
+        // passing in index as 'left' and i as 'right', as i tends to move faster because of loop increment
         //choose
         partitionedArr.push(s.slice(index, i + 1));
         //explore
-        helper(s, partitionedArr, i+1);   // keeping index = i + 1, as it will help in moving one step forward in the 's'
+        helper(s, partitionedArr, i + 1); // keeping index = i + 1, as it will help in moving one step forward in the 's'
         //unchoose
-        partitionedArr.pop();          
+        partitionedArr.pop();
       }
     }
   }
-  
+
   helper(s, new Array(), 0);
   return resultArr;
 };
 
-function isPalindrome(s, left, right){
-  while(left < right){
-    if(s[left] != s[right]) return false;
+function isPalindrome(s, left, right) {
+  while (left < right) {
+    if (s[left] != s[right]) return false;
     left++;
     right--;
   }
@@ -264,24 +265,24 @@ Output: true
  * @param {number} capacity
  * @return {boolean}
  */
-var carPooling = function(trips, capacity) {
-    if(trips.length === 1) {
-        return capacity >= trips[0][0]
+var carPooling = function (trips, capacity) {
+  if (trips.length === 1) {
+    return capacity >= trips[0][0];
+  }
+  let arr = new Array(1000).fill(0);
+  for (var i = 0; i < trips.length; i++) {
+    for (var j = trips[i][1]; j < trips[i][2]; j++) {
+      arr[j] += trips[i][0];
+      if (arr[j] > capacity) {
+        return false;
+      }
     }
-    let arr = new Array(1000).fill(0)
-    for(var i = 0; i < trips.length; i++) {
-        for(var j = trips[i][1]; j < trips[i][2]; j++) {
-            arr[j] += trips[i][0];
-            if(arr[j] > capacity) {
-                return false
-            }
-        }
-    }
-    return true
+  }
+  return true;
 };
 ```
 
-### 382. Linked List Random Node  Medium
+### 382. Linked List Random Node Medium
 
 2022-01-07
 
@@ -324,138 +325,96 @@ solution.getRandom(); // return 3
 /**
  * @param {ListNode} head
  */
-var Solution = function(head) {
-    this.head = head
-    this.count = 0
-    let cur = head
-    while(cur) 
-        cur = cur.next, this.count++
+var Solution = function (head) {
+  this.head = head;
+  this.count = 0;
+  let cur = head;
+  while (cur) (cur = cur.next), this.count++;
 };
 
 /**
  * @return {number}
  */
-Solution.prototype.getRandom = function(head = this.head, N = this.count) {
-    let cur = head;
-    let hops = Math.floor(Math.random() * N);
-    while (hops--)
-        cur = cur.next;
-    return cur.val;
+Solution.prototype.getRandom = function (head = this.head, N = this.count) {
+  let cur = head;
+  let hops = Math.floor(Math.random() * N);
+  while (hops--) cur = cur.next;
+  return cur.val;
 };
 
-/** 
+/**
  * Your Solution object will be instantiated and called as such:
  * var obj = new Solution(head)
  * var param_1 = obj.getRandom()
  */
 ```
 
-### 1022. Sum of Root To Leaf Binary Numbers Easy
+### 1041. Robot Bounded In Circle Medium
 
-2022-01-11
+2022-01-09
 
-You are given the root of a binary tree where each node has a value 0 or 1. Each root-to-leaf path represents a binary number starting with the most significant bit.
+On an infinite plane, a robot initially stands at (0, 0) and faces north. The robot can receive one of three instructions:
 
-For example, if the path is 0 -> 1 -> 1 -> 0 -> 1, then this could represent 01101 in binary, which is 13.
-For all leaves in the tree, consider the numbers represented by the path from the root to that leaf. Return the sum of these numbers.
+- "G": go straight 1 unit;
+- "L": turn 90 degrees to the left;
+- "R": turn 90 degrees to the right.
+  The robot performs the instructions given in order, and repeats them forever.
 
-The test cases are generated so that the answer fits in a 32-bits integer.
+Return true if and only if there exists a circle in the plane such that the robot never leaves the circle.
 
-```
-Input: root = [1,0,1,0,1,0,1]
-Output: 22
-Explanation: (100) + (101) + (110) + (111) = 4 + 5 + 6 + 7 = 22
-```
-
-
-```js
-/**
- * Definition for a binary tree node.
- * function TreeNode(val, left, right) {
- *     this.val = (val===undefined ? 0 : val)
- *     this.left = (left===undefined ? null : left)
- *     this.right = (right===undefined ? null : right)
- * }
- */
-/**
- * @param {TreeNode} root
- * @return {number}
- */
-var sumRootToLeaf = function(root) {
-    let res = 0
-    dfs(root, '')
-    function dfs (root, sum) {
-        if(root === null) return ''
-        if(!root.left && !root.right) {
-            res += parseInt(sum + root.val, 2)
-        }
-        dfs(root.left, sum + root.val)
-        dfs(root.right, sum + root.val)
-    }
-    return res
-};
-
+**Example 1:**
 
 ```
+Input: instructions = "GGLLGG"
+Output: true
+Explanation: The robot moves from (0,0) to (0,2), turns 180 degrees, and then returns to (0,0).
+When repeating these instructions, the robot remains in the circle of radius 2 centered at the origin.
 
+Input: instructions = "GG"
+Output: false
+Explanation: The robot moves north indefinitely.
 
-### 701. Insert into a Binary Search Tree  Medium
-
-2022-01-12
-
-You are given the root node of a binary search tree (BST) and a value to insert into the tree. Return the root node of the BST after the insertion. It is guaranteed that the new value does not exist in the original BST.
-
-Notice that there may exist multiple valid ways for the insertion, as long as the tree remains a BST after insertion. You can return any of them.
-
-```
-Input: root = [4,2,7,1,3], val = 5
-Output: [4,2,7,1,3,5]
-Explanation: Another accepted tree is:
-
-Input: root = [40,20,60,10,30,50,70], val = 25
-Output: [40,20,60,10,30,50,70,null,null,25]
-
-Input: root = [4,2,7,1,3,null,null,null,null,null,null], val = 5
-Output: [4,2,7,1,3,5]
+Input: instructions = "GL"
+Output: true
+Explanation: The robot moves from (0, 0) -> (0, 1) -> (-1, 1) -> (-1, 0) -> (0, 0) -> ...
 ```
 
 ```js
 /**
- * Definition for a binary tree node.
- * function TreeNode(val, left, right) {
- *     this.val = (val===undefined ? 0 : val)
- *     this.left = (left===undefined ? null : left)
- *     this.right = (right===undefined ? null : right)
- * }
+ * @param {string} instructions
+ * @return {boolean}
  */
-/**
- * @param {TreeNode} root
- * @param {number} val
- * @return {TreeNode}
- */
-var insertIntoBST = function(root, val) {
-    if(!root) {
-        return root = new TreeNode(val)
+var isRobotBounded = function (instructions) {
+  const arr = instructions.split("");
+  let currentX = 0;
+  let currentY = 0;
+  let direction = 1;
+  arr.map((item) => {
+    if (item === "G") {
+      if (direction === 1) {
+        currentX += 1;
+      } else if (direction === 2) {
+        currentY += 1;
+      } else if (direction === 3) {
+        currentX -= 1;
+      } else if (direction === 4) {
+        currentY -= 1;
+      }
+    } else if (item === "L") {
+      if (direction === 1) {
+        direction = 4;
+      } else {
+        direction -= 1;
+      }
+    } else if (item === "R") {
+      if (direction === 4) {
+        direction = 1;
+      } else {
+        direction += 1;
+      }
     }
-    fn(root, val)
-    return root
-    function fn(root, val) {
-        if(!root) {
-            return ''
-        }
-        if(val > root.val) {
-            if(root.right) {
-                fn(root.right, val)
-            }else {
-                root.right = new TreeNode(val)
-            }
-        }else {
-            if(root.left) {
-                fn(root.left, val)
-            }else {
-                root.left = new TreeNode(val)
-            }
-        }
-    }
+    return item;
+  });
+  return (currentX === 0 && currentY === 0) || direction !== 1;
 };
 ```
