@@ -18,7 +18,7 @@
 
 ### 1.1 函数式更新
 
-```js
+```jsx
 function Counter({initialCount}) {
   const [count, setCount] = useState(initialCount);
   return (
@@ -36,7 +36,7 @@ function Counter({initialCount}) {
 `useState` 不会自动合并更新对象, 你可以结合 **展开运算符** 来达到合并更新对象的效果. 
 `useReducer` 是另一种可选方案, 它更适合用于管理包含多个子值的 state 对象.
 
-```js
+```jsx
 setState(prevState => {
   return {...prevState, ...updatedValues};
 });
@@ -48,7 +48,7 @@ setState(prevState => {
 `initialState` 参数只会在组件初始渲染中起作用, 后续渲染时会被忽略, 如果初始 state 需要通过复杂计算获得, 则可以传入一个函数,
 在函数中计算并返回初始的 state, 此函数只在初始渲染时被调用: 
 
-```js
+```jsx
 const [state, setState] = useState(() => {
   const initialState = someExpensiveComputation(props); // 只在组件初始化时执行一次
   return initialState;
@@ -70,7 +70,7 @@ React 可能仍需要在跳过渲染前渲染该组件. 不过由于 React 不�
 
 `useState` 返回的更新状态方法是异步的, 要在下次重绘时才能获取新值
 
-```js
+```jsx
 const [count, setCount] = useState(0);
 setCount(1);
 console.log(count);  // 是 0 不是 1
@@ -78,7 +78,7 @@ console.log(count);  // 是 0 不是 1
 
 利用回调可以让我们拿到最新的 state, 示例中 `current => current + 1` 更符合我们的预期
 
-```js
+```jsx
 const App3 = () => {
   const [count, setCount] = useState(0);
 
@@ -104,6 +104,31 @@ const App3 = () => {
 }
 ```
 
+**setState 是同步还是异步的**
+
+- 如果是正常的情况下，也就是没有使用 Concurrent 组件，是同步更新的，但是不会立即获得最新的 state 值。因为调用 setState 只是单纯的将最新的状态放到 updateQueue 链表上，等这个点击事件（合成事件）结束后会触发一个回调函数，在这个回调函数中才会更新 state，以及重新渲染。
+- 当使用了 Concurrent 组件的时候，才是真正的异步更新模式。同样没法立即获得最新状态，并且在执行 React 更新和渲染的过程中，使用了真正的异步方式（postMessage）会放到 eventloop 中
+- 当使用了 flushSync 这个 api 的时候，React 更新渲染是完全同步的，会立即触发更新和渲染操作，可以获取到最新的状态
+
+```jsx
+ flushSync(() => {
+   this.setState({
+     data: 'xxx'
+   })
+ })
+
+ <Concurrent>
+   <h1>xxx</h1>
+ </Concurrent>
+```
+
+**想立即获取 state 值**
+
+- flushSync
+- addEventListener
+- serRimeout(() => {})
+
+
 ### 1.5 行为测试
 
 - setState 更新组件状态, 函数组件会被运行 2 次 ![详解](https://reactjs.org/docs/strict-mode.html#detecting-unexpected-side-effects)
@@ -123,7 +148,7 @@ const App3 = () => {
 注1: 实际 `PureComponent` 中不存在也不允许存在 `shouldComponentUpdate`, 实际代码是.
 React中对比 `ClassComponent` 是否需要更新, 只有两个地方. 一看有没有 `shouldComponentUpdate` 方法, 二就是 `PureComponent` 判断.
 
-```js
+```jsx
 if (ctor.prototype && ctor.prototype.isPureReactComponent) {
   return (
     !shallowEqual(oldProps, newProps) || !shallowEqual(oldState, newState)
@@ -131,22 +156,11 @@ if (ctor.prototype && ctor.prototype.isPureReactComponent) {
 }
 ```
 
-
-
-
-## useEffect && useLayoutEffect
-
-用法一致, 如果不传第二个参数, 只要该组件有 `state` 改变就会触发一次回调, 用 return 返回一个函数, 组件每次重新渲染都会先执行该函数
-区别:
-
-- `useEffect` 是异步调用 页面渲染后执行
-- `useLayoutEffect` 是同步调用 页面渲染前执行.
-
-## PureComponent
+##### 1.5.2 PureComponent
 
 `PureComponent` 会浅比较, `props` 和 `state`是否相同, 来决定是否重新渲染组件, 所以一般用于性能调优,减少 render 次数
 
-## memo
+##### 1.5.3 memo
 
 `React.memo` 和 `PureComponent` 作用类似, 可以做性能优化, `React.memo`是高阶组件, 函数组件和类组件都能使用
 
@@ -158,35 +172,343 @@ if (ctor.prototype && ctor.prototype.isPureReactComponent) {
 memo 第二个参数 返回 true 组件不渲染, false 渲染
 shouldComponentUpdate 返回 true 渲染 false 不渲染
 
+
+## 2 useEffect 添加副作用
+
+之前可能在 React 组件中执行过数据获取、订阅或手动修改过 DOM. 我们统一把这些操作称为"副作用".
+
+`useEffect` 是一个 Effect Hook, 给函数组件增加了操作副作用的能力. 他跟类组件中的 `componentDidMount`、`componentDidUpdate` 和 `componentWillUnmount`
+具有相同的用途, 只不过被合并成一个 API.
+
+```jsx
+import React, { useState, useEffect } from 'react'
+
+function Example() {
+  const [count, setCount] = useState(0)
+  // 相当于 componentDidMount 和 componentDidUpdate:
+  useEffect(() => {
+    // 使用浏览器的 API 更新页面标题
+    document.title = `You clicked ${count} times`
+  })
+
+  return (
+    <div>
+      <p>You clicked {count} times</p>
+      <button onClick={() => setCount(count + 1)}>Click me</button>
+      <button onClick={() => setCount(c => c + 1)}>Click me</button>  // setCount 支持回调函数
+    </div>
+  )
+}
+
+```
+
+当你调用 `useEffect`, 就是在告诉 React 在完成对 DOM 的更改后运行你的 "副作用" 函数. 在类组件中, render 函数不应该有任何副作用.
+一般来说,在这里执行操作太早了, 所以通常我们把 类组件 中的副作用操作 放到 `componentDidMount` 和 `componentDidUpdate` 中
+
+由于副作用函数是在组件内声明的, 所以他们可以访问到组件的 `props` 和 `state`
+
+默认情况下, React会在每次渲染后调用副作用函数--- 包括第一次渲染得时候
+
+副作用函数还可以通过返回一个函数来指定如何 "清除" 副作用.
+
+虽然 `useEffect` 会在浏览器绘制后延迟执行, 但会保证在任何新的渲染前执行. React将在组件更新前刷新上一轮渲染的 effect
+
+**为什么在组件内部调用`useEffect`**
+
+将 `useEffect` 放到组件内部让我们可以在 effect 中直接访问 props 和 state 变量. 我们不需要特殊的 API 来读取, 它保存在函数作用域中.
+Hook 利用了 JavaScript 的闭包机制.
+
+**`useEffect`会在每次渲染后都执行嘛?**
+
+是的, 默认情况下, 它在第一次渲染之后和每次更新之后都会执行. 你可能更容易接受 effect 发生在 "渲染之后" 这种概念, 不用再考虑 "挂载" 还是 "更新".
+
+与 `componentDidUpdate` 或 `componentDidMount` 不同, 使用 `useEffect` 调度的 effect 不会阻塞浏览器更新屏幕, 这让你的应用看起来响应更快, 
+大多数情况下, effect 不需要同步执行, 在个别的情况下(例如测量布局), 有单独的 `useLayoutEffect` Hook 使用, 其 API 与 `useEffect` 相同. 
+
+```jsx
+// 类组件里同一行代码要写两次
+class Example extends Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      count: 0
+    }
+  }
+
+  componentDidMount() {
+    document.title = `You clicked ${this.state.count} times`  // 1
+  }
+
+  componentDidUpdate() {
+    document.title = `You clicked ${this.state.count} times`  // 2
+  }
+
+  render() { /* ... */ }
+}
+
+
+// 使用钩子一行搞定
+
+function Example() {
+  const [count, setCount] = useState(0)
+
+  useEffect(() => {
+    document.title = `You clicked ${count} times`;
+  })
+
+  return ( /* ... */ )
+}
+
+
+```
+
+**useEffect && useLayoutEffect 区别**
+
+用法一致, 如果不传第二个参数, 只要该组件有 `state` 改变就会触发一次回调, 用 return 返回一个函数, 组件每次重新渲染都会先执行该函数
+区别:
+
+- `useEffect` 是异步调用 页面渲染后执行
+- `useLayoutEffect` 是同步调用 页面渲染前执行.
+
+### 2.1 使用多个Effect 实现关注点分离
+
+Hook 允许我们 按照代码的用途分离 他们, 而不是像生命周期函数一样, React 会 按照 effect 声明的顺序 依次调用 每一个 effect.
+
+使用 `useEffect` 时要注意, 如果有多个副作用, 应该调用多个 `useEffect` 而不应该写到一起.
+
+```jsx
+class FriendStatusWithCounter extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { count: 0, isOnline: null };
+    this.handleStatusChange = this.handleStatusChange.bind(this);
+  }
+
+
+  componentDidMount() {
+    document.title = `You clicked ${this.state.count} times`;
+    ChatAPI.subscribeToFriendStatus(
+      this.props.friend.id,
+      this.handleStatusChange
+    );
+  }
+
+  componentDidUpdate() {
+    document.title = `You clicked ${this.state.count} times`;
+  }
+
+  componentWillUnmount() {
+    ChatAPI.unsubscribeFromFriendStatus(
+      this.props.friend.id,
+      this.handleStatusChange
+    );
+  }
+
+  handleStatusChange(status) {
+    this.setState({
+      isOnline: status.isOnline
+    });
+  }
+  // ...
+}
+
+
+
+function FriendStatusWithCounter(props) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    document.title = `You clicked ${count} times`;
+  });
+
+  const [isOnline, setIsOnline] = useState(null);
+  useEffect(() => {
+    function handleStatusChange(status) {
+      setIsOnline(status.isOnline);
+    }
+    ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);  
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+    };
+  });
+  // ...
+}
+
+```
+
+### 2.2 需要清除的 effect
+
+还有一些副作用需要清除, 例如订阅外部数据源. 这种情况下清除工作很重要, 可以防止引起内存泄露, 每个 effect 都可以返回一个清除 函数. 如此可以将
+添加和移除订阅的逻辑放到一起.
+
+每次渲染时, React 会在执行当前 effect 之前 对上一个 effect 进行清除, 最后, React 会在组件卸载的时候 在执行一次清除操作.
+
+```jsx
+import React, { useState, useEffect } from 'react';
+
+function FriendStatus(props) {
+  const [isOnline, setIsOnline] = useState(null);
+
+  useEffect(() => {
+    function handleStatusChange(status) {
+      setIsOnline(status.isOnline);
+    }
+
+    // 添加副作用
+    ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+    // 通过返回一个函数来指定如何“清除”副作用：
+    return function cleanup() {
+      ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+    };
+  });
+
+  if (isOnline === null) {
+    return 'Loading...';
+  }
+  return isOnline ? 'Online' : 'Offline';
+}
+
+``` 
+
+注: `useEffect` 的清理函数在 新的渲染完成之后, 新的副作用函数重新运行 之前进行.
+
+```jsx
+// todo
+
+function Foo() {
+  const [count, setCount] = useState(0);
+  if (count < 1) { setCount(count + 1); }
+  console.log(`${count}-1`);
+  useEffect(() => {
+    console.log(`${count}-2`);
+    return () => console.log(`${count}-3`);
+  })
+  return <div>Foo</div>;
+}
+
+// 初始化时输出
+0-1
+1-1
+0-1
+1-1
+1-2
+// 重新渲染时输出
+1-1
+1-1
+1-3  // 此时浏览器已经重新渲染完成了，重新渲染完成后才会清理上一次的副作用
+1-2
+
+特别说明：以上是在 React.StrictMode + 开发环境 下的试验结果，非 StrictMode 下输出内容见下方
+原因见 https://github.com/facebook/react/issues/15074#issuecomment-471197572
+
+// 初始化时输出
+0-1
+1-1
+1-2
+// 重新渲染时输出
+1-1
+1-3
+1-2
+
+```
+
+### 2.3 为什么每次更新都需要运行 Effect
+
+传递给 `useEffect` 的函数在每次渲染中都会有所不同, 这是刻意为之, 事实上 这正是我们可以在 effect 中取到 最新的 count 值, 而不用担心过期的原因.
+每次我们重新渲染, 都会生成新的effect, 替换掉之前的.
+
+元素接收的某个 props 参数变化时, 元素不会销毁重建, 所以在类组件中, `componentDidUpdate` 中添加更新逻辑就很有必要. 忘记正确处理 `componentDidUpdate`
+是 React 中常见的bug. 而使用 Effect Hook, 他会在调用一个新的 effect 之前对前一个 effect 进行清理, 此默认行为保证了一致性, 避免了在类组件中没有处理更新
+逻辑而引发的问题.
+
+```jsx
+class FriendStatusWithCounter extends React.Component {
+
+  // ...
+  componentDidMount() {
+    ChatAPI.subscribeToFriendStatus(this.props.friend.id, this.handleStatusChange);
+  }
+  // 如果没有这里的逻辑，那么当 friend 变化时，我们的组件展示的还是原来的好友状态
+  componentDidUpdate(prevProps) {
+    // 取消订阅之前的 friend.id
+    ChatAPI.unsubscribeFromFriendStatus(prevProps.friend.id, this.handleStatusChange);
+    // 订阅新的 friend.id
+    ChatAPI.subscribeToFriendStatus(this.props.friend.id, this.handleStatusChange);
+  }
+  componentWillUnmount() {
+    ChatAPI.unsubscribeFromFriendStatus(this.props.friend.id, this.handleStatusChange);
+  }
+  // ...
+}
+
+function FriendStatus(props) {
+  // ...
+  useEffect(() => {
+    // ...
+    ChatAPI.subscribeToFriendStatus(props.friend.id, handleStatusChange);
+    return () => {
+      ChatAPI.unsubscribeFromFriendStatus(props.friend.id, handleStatusChange);
+    };
+  });
+  // ...
+}
+
+```
+
+### 2.4 跳过 Effect 以优化性能
+
+在某些情况下, 每次渲染后都执行清理或者执行 effect 可能导致性能问题. 在类组件中 我们可以通过在 `componentDidUpdate` 中添加 prevProps 或者 prevState
+的比较逻辑解决
+
+```jsx
+componentDidUpdate(prevProps, prevState) {
+  if (prevState.count !== this.state.count) {
+    document.title = `You clicked ${this.state.count} times`;
+  }
+}
+```
+
+这是很常见的需求, 所以被内置到了 `useEffect` Hook API 中. 如果特定值在两次渲染之间没有发生变化, 你可以通过 React 跳过对 Effect的调用, 只需要传递第二个参数即可: 
+
+```jsx
+// 这个时候跟 Vue.js 的 watch 很像
+
+useEffect(() => {
+  document.title = `You clicked ${count} times`;
+}, [count]); // 仅在 count 更改时更新
+
+注：经过试验，以下类型的值都有效
+
+* 某个 state 值, 如 [count]
+* state 的子属性, 如 [obj.count] // const [obj, setObj] = useState({count: 0})
+* ref.current, 如 [ref.current.count] // const ref = useRef({})
+
+```
+
+如果想执行只运行一次的 effect（仅在组件挂载和卸载时执行），可以传递一个空数组[] 作为第二个参数。这就告诉 React 你的 effect 不依赖于 props 或 state 中的任何值，所以它永远都不需要重复执行.
+
+如果你传入了一个空数组 [] ，effect 内部的 props 和 state 就会一直拥有其初始值。
+
+除此之外，请记得 React 会等待浏览器完成画面渲染之后才会延迟调用 useEffect，因此会使得额外操作很方便。
+
+### 2.5 避坑指南
+
+在 2.4 部分有写到 “如果你传入了一个空数组 [] ，effect 内部的 props 和 state 就会一直拥有其初始值。 ”，在实际编码过程中发现，很容易习惯性地添加 useEffect 的第二个参数，但经常忘了将内部用到的依赖添加进去，导致函数内部取值不符合（心里）预期。当然这个 “React Hook 需要手动维护依赖” 的问题可以通过配置 ESLint 的 autofix 来解决。
+
+```jsx
+useEffect(() => {
+  console.log(a); // 这里对 a 的引用是符合预期的
+  console.log(b)；// 这里对 b 的引用值会停留在上次 a 变更时的状态或(如果 a 没变更过)初始化时的状态 
+}, [a]);  // 这里应该是 [a, b]，但实际编码过程中很容易漏掉 b
+
+```
+
 ## useCallback UseMemo Memo 区别
 
 - React.memo 包裹以后，子组件只在 props 发生变化以后才会重新渲染。
 - useCallback 可以对函数缓存，父组件给子组件传值（值为函数 handleClick），由于 handleClick 是一个对象，每次重新渲染生成的 handleClick 都是新的，所以子组件依旧会渲染，这时候只能通过 useCallback 包裹
 - 如果传递给自组建一个对象{a:1,b:2} 这时候需要使用 useMemo
 
-## setState 是同步还是异步的
 
-- 如果是正常的情况下，也就是没有使用 Concurrent 组件，是同步更新的，但是不会立即获得最新的 state 值。因为调用 setState 只是单纯的将最新的状态放到 updateQueue 链表上，等这个点击事件（合成事件）结束后会触发一个回调函数，在这个回调函数中才会更新 state，以及重新渲染。
-- 当使用了 Concurrent 组件的时候，才是真正的异步更新模式。同样没法立即获得最新状态，并且在执行 React 更新和渲染的过程中，使用了真正的异步方式（postMessage）会放到 eventloop 中
-- 当使用了 flushSync 这个 api 的时候，React 更新渲染是完全同步的，会立即触发更新和渲染操作，可以获取到最新的状态
-
-```jsx
- flushSync(() => {
-   this.setState({
-     data: 'xxx'
-   })
- })
-
- <Concurrent>
-   <h1>xxx</h1>
- </Concurrent>
-```
-
-## 想立即获取 state 值
-
-- flushSync
-- addEventListener
-- serRimeout(() => {})
 
 ## 如何理解单向数据流
 
