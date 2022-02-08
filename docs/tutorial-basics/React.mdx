@@ -502,7 +502,169 @@ useEffect(() => {
 
 ```
 
-## useCallback UseMemo Memo 区别
+## 3. `useContext` 访问上下文
+
+`useContext` 接收一个context对象(`React.createContext` 的返回值) 并返回该context的当前值. 当前的context值由上层组件中距离当前组件最近的
+`<MyContext.Provider value={xxx}>` 的 `value` prop 决定.
+
+当组件上层最近的`<MyContext.Provider>`更新时, 该Hook会触发重新渲染.
+如果渲染组建的开销过大, 你可以通过使用 `memoization` 来进行优化.
+如果你在接触Hook前已经对 context API 比较熟悉, useContext(MyContext) 
+相当于 类组件中的 static contextType = MyContext 或者是 <MyContext.Consumer>
+
+**特别说明:**
+
+- `useContext(MyContext)` 只是让你能够读取 context 的值以及订阅 context 的变化. 你仍然需要在上层组件树中使用<MyContext.Provider>来为下层组件提供context
+- 注意不要滥用 context, 会破坏组件的独立性.
+
+```jsx
+const themes = {
+  light: {
+    foreground: "#000000",
+    background: "#eeeeee"
+  },
+
+  dark: {
+    foreground: "#ffffff",
+    background: "#222222"
+  }
+};
+
+const ThemeContext = React.createContext(themes.light);
+
+function App() {
+  return (
+    <ThemeContext.Provider value={themes.dark}>
+      <Toolbar />
+    </ThemeContext.Provider>
+  );
+}
+
+function Toolbar(props) {
+  return (
+    <div>
+      <ThemedButton />
+    </div>
+  );
+}
+
+function ThemedButton() {
+  const theme = useContext(ThemeContext);
+  return (
+    <button style={{ background: theme.background, color: theme.foreground }}>
+      I am styled by theme context!
+    </button>
+  );
+}
+```
+
+
+## 4. 额外的Hook
+
+### 4.1 `useRef`
+
+-  获取子组件或者DOM节点的句柄, 无法获取函数子组件的 ref (但函数式可以借助 `React.forwardRef` 来传递 ref), 必须是类组件, 所以类组件暂时无法被完全替代
+-  渲染周期之间共享数据的存储, state 也可以跨渲染周期保存, 但会触发重新渲染, 而 ref 不会触发重新渲染
+-  ref 的 `current` 值可以随便修改, 但ref对象本身不可扩展属性 `Object.isExtensible(ref) === false`
+
+useRef 返回一个可变的 ref 对象, 其 `current` 属性被初始化为传入的参数 initialValue. 返回的 ref 对象在组件的整个生命周期内 保持不变
+
+如果你将 ref对象以 `<div ref={myRef} />` 形式传入组件, 无论该节点如何改变, React都会将 ref 的 `current` 属性设置为该节点的 dom
+
+`useRef` 比 `ref` 属性更有用, 它可以保存任何可变值, 其类似于在 class 中使用 实例字段.
+
+ref 对象发生变化时, `useRef` 不会通知, 变更 `current` 不会触发组件的重新渲染.
+
+如果想要在 React 绑定或解绑 DOM 节点的 ref 时运行某些代码，则需要使用 **ref callback** 来实现。
+
+```jsx
+function TextInputWithFocusButton() {
+  const inputEl = useRef(null);
+  const onButtonClick = () => {
+    // `current` 指向已挂载到 DOM 上的文本输入元素
+    inputEl.current.focus();
+  };
+  return (
+    <>
+      <input ref={inputEl} type="text" />
+      <button onClick={onButtonClick}>Focus the input</button>
+    </>
+  );
+}
+
+```  
+
+#### 4.1.1 ref callback
+
+```jsx
+function TextInputWithFocusButton() {
+  const inputEl = useRef(null);
+  const onButtonClick = () => {
+    inputEl.current.focus();
+  };
+  const refCallback = el => {
+    console.log('refCallback', {el});
+    inputEl.current = el;
+  }
+
+  return (
+    <>
+      <input ref={refCallback} type="text" />
+      <button onClick={onButtonClick}>Focus the input</button>
+    </>
+  );
+}
+
+```
+
+### 4.2 `useMemo`
+
+`memo()` 限制一个组件是否重复渲染, 而 `useMemo` 则是限制一个函数是否重复执行.
+
+`useMemo` 和 `useEffect` 第二个参数逻辑时相同的, 不同的是, `useMemo` 是有返回值的, 在渲染之前执行, `useEffect` 是在渲染之后执行.
+
+如果没有提供依赖数组, `useMemo` 在每次渲染时都会重新计算
+
+```jsx
+// 这个跟 Vue.js 中的 computed 很像
+const double = useMemo(() => count * 2, [count])
+
+``` 
+
+### 4.3 `useCallback`
+
+把内联回调函数以及依赖项数组传入 `useCallback`, 它将返回该回调函数的 memorized 版本. 该回调函数仅在某个依赖项 改变时才会更新, 当你把回调函数传递给经过优化的并使用引用相等性去避免非必要渲染（例如 shouldComponentUpdate）的子组件时，它将非常有用。
+
+`useCallback(fn, deps)` 相当于 `useMemo(() => fn, deps)`
+
+```jsx
+// 套 memo 后，只要 props 没变就不会重新渲染
+// `memo` 是一个 HOC，可以将 `Component` 或 `FunctionComponent` 转换成一个 `PureComponent`
+// 本例中，App 内的 count 值变更，不会输出 “Foo render”，没套的话每次 App 的重新渲染都会触发 Foo 重复渲染
+const Foo = memo(function Foo(props) {
+  console.log('Foo render')
+  // 这里必须显式绑定，在外层绑定不起作用，这个跟 Vue.js 行为不一样
+  // 还可以写成 {...props} 这样通用性更强
+  return <div onClick={props.onClick}>Me Foo</div>
+})
+
+const App = () => {
+  const [count, setCount] = useState(0)
+  // 没套 useCallback 的话，传递的函数句柄每次渲染都会变化，从而导致 Foo 重复渲染
+  const clickFoo = useCallback(() => console.log('Foo Clicked'), [])
+  return (
+    <div>
+      <button onClick={() => setCount(count + 1)}>Add</button> // 在 DOM 上无需 useCallback
+      <Foo onClick={clickFoo} />                               // 传递给子组件就要套 useCallback
+    </div>
+  )
+}
+
+```
+
+
+
+### 4.4 useCallback UseMemo Memo 区别
 
 - React.memo 包裹以后，子组件只在 props 发生变化以后才会重新渲染。
 - useCallback 可以对函数缓存，父组件给子组件传值（值为函数 handleClick），由于 handleClick 是一个对象，每次重新渲染生成的 handleClick 都是新的，所以子组件依旧会渲染，这时候只能通过 useCallback 包裹
