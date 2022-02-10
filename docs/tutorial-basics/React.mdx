@@ -510,11 +510,11 @@ useEffect(() => {
 当组件上层最近的`<MyContext.Provider>`更新时, 该Hook会触发重新渲染.
 如果渲染组建的开销过大, 你可以通过使用 `memoization` 来进行优化.
 如果你在接触Hook前已经对 context API 比较熟悉, useContext(MyContext) 
-相当于 类组件中的 static contextType = MyContext 或者是 <MyContext.Consumer>
+相当于 类组件中的 static contextType = MyContext 或者是 `<MyContext.Consumer>`
 
 **特别说明:**
 
-- `useContext(MyContext)` 只是让你能够读取 context 的值以及订阅 context 的变化. 你仍然需要在上层组件树中使用<MyContext.Provider>来为下层组件提供context
+- `useContext(MyContext)` 只是让你能够读取 context 的值以及订阅 context 的变化. 你仍然需要在上层组件树中使用`<MyContext.Provider>`来为下层组件提供context
 - 注意不要滥用 context, 会破坏组件的独立性.
 
 ```jsx
