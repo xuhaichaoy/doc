@@ -1,3 +1,21 @@
+## 1. 数据类型
+
+### 1.1 基本数据类型
+
+8种基本数据类型, 分别是: undefined null string number boolean symbol bigint Object
+
+symbol bigint 是 ES6 新增的
+
+- Symbol 代表独一无二的值，最大的用法是用来定义对象的唯一属性名。
+- BigInt 可以表示任意大小的整数。
+
+### 1.2 数据类型判断
+
+- `typeof` 能判断所有值类型、函数, 不可以对 `null` `objct` `array` 判断 因为都返回 `object`
+- `instanceof` 能判断对象类型, 不能判断基本类型, **其内部的运行机制是判断在其原型链中是否可以找到该类型的原型**
+- `Object.prototype.toString.call()` 所有原始数据类型都能判断,
+
+
 ## Set 和 Map 区别
 
 - Set 和 Map 主要应用场景在于 数据重组和数据储存
