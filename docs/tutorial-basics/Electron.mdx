@@ -5,4 +5,41 @@
 - remote: 能通过方法直接调用以及全局变量获取来实现数据的传递
 - ipc: 能通过事件注册发布的方式实现数据传递
 
-### 
+### 坑点:
+
+#### 1. 托盘图标会自动消失
+
+```tip 描述
+托盘图标会自动消失
+```
+
+原因: 当我们声明Tray模块中的变量时，没有将其声明为全局变量，导致在运行过程中，会被`垃圾回收机制`回收掉。
+
+解决: 将存储窗口/系统托盘的变量声明为全局变量，也就是在main.js中`app.on('ready',fuc)`之前声明此变量
+
+#### 2. 拖拽窗口移动
+
+[github issue](https://github.com/electron/electron/issues/27959)
+
+```tip 描述
+如果显示器存在缩放比例, 使用 setPosition 设置窗口位置时候, 窗口会自动变大.
+```
+
+解决: 只能放弃使用 `setPosition`, 可以使用 `setBounds` 替代 `win.setBounds({ x, y, width: 800, height }, true);`
+实时传入窗体宽高
+
+#### 3. 窗口设置圆角, 设置透明背景
+
+```js
+// 背景设置透明时, 显示隐藏窗口会频闪
+const { BrowserWindow } = require('electron')
+const win = new BrowserWindow({ transparent: true })
+
+// 会触发频闪
+win.show()
+```
+
+解决: 只能在hide窗口的时候将整个窗口的透明度设为0, show的时候 设为1
+
+
+
