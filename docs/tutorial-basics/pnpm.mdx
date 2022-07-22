@@ -1,0 +1,162 @@
+pnpm 是一款当代备受关注的 新兴(问题较多) 包管理工具，使用过的同学们都会被它极快的安装速度、极少的磁盘存储空间所吸引！
+
+:::caution
+After a few days, I realized that Yarn is just a small improvement over npm. Although it makes installations faster and it has some nice new features, it uses the same flat node_modules structure that npm does (since version 3).
+And flattened dependency trees come with a bunch of issues
+
+几天后，我意识到 Yarn 只是对 npm 的一个小小的改进。尽管它使安装速度更快，并且具有一些不错的新功能，但它使用与 npm 相同的平面 node_modules 结构（自版本 3 起）。扁平化的依赖树带来了一系列问题(具体后面会讲)
+:::
+
+至于为什么叫 `pnpm` ？是因为 `pnpm` 作者对现有的包管理工具，尤其是 npm 和 yarn 的性能特别失望，所以起名叫做 performance npm，即 `pnpm` （高性能 npm）
+
+如何突显 pnpm 的性能优势？在 pnpm 官网上，提供了一个 benchmarks 图表，它比对了项目在 npm、pnpm、yarn（正常版本和 PnP 版）中，install、update 场景下的耗时：
+
+![Docs Version Dropdown](/img/tutorial/0922e407d53a46b3a64a4c037d897e62_tplv-k3u1fbpfcp-zoom-in-crop-mark_3024_0_0_0.webp)
+
+
+### 在讨论性能提升原因之前，我们需要先了解下现有包管理工具中node_modules存在的问题
+
+### node_modules 安装方式
+
+目前有两种安装方式：`Nested installation`、`Flat installation`
+
+
+### Nested installation 嵌套安装
+
+在 npm@3 之前，node_modules结构是干净、可预测的，因为node_modules 中的每个依赖项都有自己的node_modules文件夹，在package.json中指定了所有依赖项。例如下面所示，项目依赖了foo，foo又依赖了bar，依赖关系如下图所示：
+
+```js
+node_modules
+└─ foo
+   ├─ index.js
+   ├─ package.json
+   └─ node_modules
+      └─ bar
+         ├─ index.js
+         └─ package.json
+```
+
+上面结构有两个严重的问题：
+
+- package中经常创建太深的依赖树，这会导致 Windows 上的目录路径过长问题
+- 当一个package在不同的依赖项中需要时，它会被多次复制粘贴并生成多份文件
+
+
+#### Flat installation 扁平安装
+
+为了解决上述问题，npm 重新考虑了node_modules结构并提出了扁平化结构。在npm@3+ 和 yarn中，node_modules 结构变成如下所示：
+
+```js
+node_modules
+├─ foo
+|  ├─ index.js
+|  └─ package.json
+└─ bar
+   ├─ index.js
+   └─ package.json
+```
+
+可以看到，bar被提升到了顶层。如果同一个包的多个版本在项目中被依赖时，node_modules结构又是怎么样的？
+
+例如：一个项目App直接依赖了 `A（version: 1.0）` 和 `C（version: 1.0）`，`A`和 `C` 都依赖了不同版本的 `B`，其中 `A` 依赖 `B 1.0` ，`C`依赖 `B 2.0` ,可以通过下图清晰的看到npm2和npm3+结构差异：
+
+![Docs Version Dropdown](/img/tutorial/66612d54fac34ced8367b2a42f854efc_tplv-k3u1fbpfcp-zoom-in-crop-mark_3024_0_0_0.webp)
+
+包B 1.0被提升到了顶层，这里需要注意的是，多个版本的包只能有一个被提升上来，其余版本的包会嵌套安装到各自的依赖当中（类似npm2的结构）。
+
+:::caution
+至于哪个版本的包被提升，依赖于包的安装顺序
+:::
+
+### npm3+和yarn存在的问题
+
+#### Phantom dependencies 幽灵依赖
+
+Phantom dependencies 被称之为幽灵依赖或幻影依赖，解释起来很简单，即某个包没有在package.json 被依赖，但是用户却能够引用到这个包。
+
+<!-- ```js
+nodejs的寻址方式：(查看更多)
+
+1. 对于核心模块（core module） => 绝对路径 寻址
+2. node标准库 => 相对路径寻址
+3. 第三方库（通过npm安装）到node_modules下的库：
+
+ 3.1.   先在当前路径下，寻找 node_modules/xxx
+ 3.2    递归从下往上到上级路径，寻找 ../node_modules/xxx
+ 3.3    循环第二步
+ 3.4    在全局环境路径下寻找 .node_modules/xxx
+
+``` -->
+
+
+#### NPM doppelgangers NPM分身
+
+这个问题其实也可以说是 hoist 导致的，这个问题可能会导致有大量的依赖的被重复安装.
+
+举个例子：项目中有packageA、packageB、packageC、packageD。packageA依赖packageX 1.0和packageY 1.0，packageB依赖packageX 2.0和packageY 2.0，packageC依赖packageX 1.0和packageY 2.0，packageD依赖packageX 2.0和packageY 1.0。
+
+在npm2时，结构如下
+
+```js
+- package A
+    - packageX 1.0
+    - packageY 1.0
+- package B
+    - packageX 2.0
+    - packageY 2.0
+- package C
+    - packageX 1.0
+    - packageY 2.0
+- package D
+    - packageX 2.0
+    - packageY 1.0
+
+```
+
+在npm3+和yarn中，由于存在hoist机制，所以X和Y各有一个版本被提升了上来，目录结构如下
+
+```js
+- package X => 1.0版本
+- package Y => 1.0版本
+
+- package A
+- package B
+    - packageX 2.0
+    - packageY 2.0
+- package C
+    - packageY 2.0
+- package D
+    - packageX 2.0
+```
+
+
+那么pnpm是如何解决这种问题的呢？
+
+### pnpm的破解之道：网状 + 平铺的node_modules结构
+
+pnpm的用户可能会发现它node_modules并不是扁平化结构，而是目录树的结构，类似npm version 2.x版本中的结构，如下图所示
+
+
+![Docs Version Dropdown](/img/tutorial/e553fcf2111a4472a3c0b5d0f2aeea68_tplv-k3u1fbpfcp-zoom-in-crop-mark_3024_0_0_0.webp)
+
+同时还有个.pnpm目录，如下图所示
+
+![Docs Version Dropdown](/img/tutorial/fcab63e8007b4d69a8a6199b3c2ba5b3_tplv-k3u1fbpfcp-zoom-in-crop-mark_3024_0_0_0.webp)
+
+.pnpm 以平铺的形式储存着所有的包，正常的包都可以在这种命名模式的文件夹中被找到（peerDep例外）
+
+
+```js
+.pnpm/<organization-name>+<package-name>@<version>/node_modules/<name>
+
+// 组织名(若无会省略)+包名@版本号/node_modules/名称(项目名称)
+```
+
+我们称.pnmp为虚拟存储目录，该目录通过`<package-name>`@`<version>`来实现相同模块不同版本之间隔离和复用，由于它只会根据项目中的依赖生成，并不存在提升，所以它不会存在之前提到的Phantom dependencies问题！
+
+
+
+
+
+
+
