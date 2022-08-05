@@ -39,6 +39,10 @@ const config = {
     ],
   ],
 
+  plugins: [
+    "./postcss-tailwind-loader"
+  ],
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
