@@ -1,8 +1,3 @@
-### 介绍原理（浏览器的渲染机制等）， 优化思路， 优化方法
-
-### 总结：  1. 优化结果  2. 优化项分析  3. 收获
-
-
 ### 什么是性能
 
 前端领域中所说的性能泛指的是渲染性能，从渲染引擎角度看，体现的是整个渲染流程的时间长短。
@@ -34,13 +29,17 @@
 
 ### 优化项分析
 
+#### DNS优化
+
+    html页面头部写入dns缓存地址，可以减少dns解析的时间。
+
 #### 1.建立TCP链接
     
     这个阶段的优化可以采用http2.0的方式，提高建立TCP链接的速度
 
  - 先说一下http1.1存在有哪些问题：
 
-    1. 线头阻塞：TCP连接上只能发送一个请求，前面的请求未完成前，后续的请求都在排队等待。
+    1. 队头阻塞：TCP连接上只能发送一个请求，前面的请求未完成前，后续的请求都在排队等待。
     2. 多个TCP连接
     虽然HTTP/1.1管线化可以支持请求并发，但是浏览器很难实现，chrome、firefox等都禁用了管线化。所以1.1版本请求并发依赖于多个TCP连接，建立TCP连接成本很高，还会存在慢启动的问题。
     3. 头部冗余，采用文本格式
@@ -62,7 +61,7 @@
 - 协商缓存：
 协商缓存是指，在页面加载完成后，将页面的内容缓存到本地，以便下次访问时直接从本地缓存中读取，如果本地缓存中没有，则从服务器上下载。
 
-项目打包后的资源存储到cdn 默认走强缓存，文件名是通过hash值生成的，如果文件有变化，则会更新hash值，并且更新文件名。从而达到更新资源的目的。
+项目打包后的资源存储到cdn 走强缓存，文件名是通过hash值生成的，如果文件有变化，则会更新hash值，并且更新文件名。从而达到更新资源的目的。
 如果需要使用协商缓存，需要在项目中配置协商缓存的配置文件，在配置文件中配置协商缓存的规则，比如：
 
 ```json
@@ -82,24 +81,142 @@
     
 **可以做的优化有**
 
-1. 缩小一些第三方的资源体积（按需加载）
-2. 移除一些第三方资源（vue中的jquery等）
-3. 将一些资源存放到cdn上 
-4. 部分第三方资源延迟加载  封装了ps-loader  
+1. 缩小一些第三方的资源体积（按需加载elementUI、Vant、echarts等）
+2. 移除一些第三方资源（vue中的jQuery等）
+3. 将一些资源存放到cdn上 （vue全家桶、axios等）
+4. 部分第三方资源延迟加载  封装了ps-loader延迟加载插件，可以做到延迟加载，减少首屏的资源加载，加快加载速度。（神策、百度统计等）
 5. nginx开启gzip
+
+
+**具体实施**
+
+1. UI组件等按需加载，css部分利用babel-plugin-import达成按需引入
+
+```js
+
+import { Toast, CountDown } from 'vant'
+
+module.exports = {
+  plugins: [
+	[
+		'import',
+		{ libraryName: 'vant', style: true },
+		'vant'
+	]
+]
+}
+
+```
+
+2. 移除一些无用的第三方资源，比如jQuery
+
+移除jQuery，采用原生js代替，[修改参考链接](https://github.com/nefe/You-Dont-Need-jQuery/blob/master/README.zh-CN.md)
+
+3. 将一些资源存放到cdn上，比如vue全家桶、axios，统一技术栈版本
+
+4. 部分第三方资源延迟加载，比如神策、百度统计等 
+
+封装延迟加载的插件 ps-loader
+```js
+window.PsLoader.load([
+	`${process.env.VUE_APP_PABULIC_PATH}resources/plugin/aliyun-upload-sdk/lib/aliyun-oss-sdk-5.3.1.min.js`,
+	`${process.env.VUE_APP_PABULIC_PATH}resources/plugin/aliyun-upload-sdk/aliyun-upload-sdk-1.5.0.min.js`,
+	`${process.env.VUE_APP_PABULIC_PATH}resources/plugin/aliyun-web-office-sdk.min.js`,
+])
+```
 
 
 #### 4. 页面渲染
 
-    这个阶段的优化主要是图片的优化
+    这个阶段的优化主要是图片的优化，首屏速度的优化，首屏的图片的加载速度优化
 
 **可以做的优化有**
 
-1. 只加载可视区域内的图片，等滚动到可视区域附近再去加载 封装了 PS-lazy 插件
+1. 只加载可视区域内的图片，等滚动到可视区域附近再去加载 （封装了 PS-lazy 插件）
+
+2. 只加载可视区域内的组件，等滚动到可视区域附近再去加载 （封装了 PS-lazy 插件）
+
+```js
+import PsLazy from 'ps-lazy'
+Vue.use(PsLazy, {
+	preLoad: 1.3,
+})
+
+<img loading="lazy" v-pslazy="$transImg(`@/assets/404_images/404.png`)" />
+
+```
 
 2. 图片体积压缩，提高图片加载速度，采用webp压缩
 
-    - html/js图片压缩
-    - css内图片压缩
+:::tip 简介
+WebP 是一种同时提供了有损压缩与无损压缩的图片文件格式。可以大大压缩图片的大小，并且图片的质量和 png、jpeg 等相同。WebP 的无损压缩比 png 格式的文件平均少了 45％ 的大小。
+:::
+
+利用阿里云oss处理转化为wepb格式，并可以指定图片质量
+
+- html/js图片压缩
+```js
+/** js处理办法 */
+export function transWebp(imgUrl) {
+	let img = imgUrl
+	let isTrans = imgUrl && (imgUrl.startsWith('http') || imgUrl.startsWith('//') || imgUrl.startsWith('/'))
+	if (isTrans) {
+		if (imgUrl.indexOf('?') < 0) {
+			img = `${imgUrl}?x-oss-process=image/format,webp`
+		} else {
+			const arr = imgUrl.split('?')
+			let param = arr[1]
+			if (param.indexOf('x-oss-process=image/resize') >= 0) {
+				param += '/format,webp'
+			} else {
+				param += '&x-oss-process=image/format,webp'
+			}
+			img = `${arr[0]}?${param}`
+		}
+	}
+	return img
+}
+const WebpTool = {}
+WebpTool.install = function(Vue) {
+	const isWebp = isSupportWebp()
+	Vue.prototype.$isSupportWebp = isWebp
+	Vue.prototype.$transImg = function (imgUrl = '') {
+		if (!imgUrl) return ''
+		let img = imgUrl
+		if (imgUrl.startsWith('@') || imgUrl.startsWith('.') || imgUrl.startsWith('~')) {
+			let rr = imgUrl.split('assets/')
+			try {
+				img = rr[0].indexOf('service-admin') > -1 ? require('@/service-admin/assets/' + rr[1]) : require('@/assets/' + rr[1])
+			} catch (e) {}
+		}
+		return isWebp ? transWebp(img) : img
+	}
+}
+
+// 使用方法
+<img loading="lazy" v-pslazy="$transImg(`@/assets/404_images/404.png`)" />
+```
+
+- css内图片压缩
+
+```js 
+/** css处理办法 */
+// 判断当前客户端是否支持webp 如果支持就全局添加类名
+// 通过 postcss-webp 插件去检测css内部图片添加新的规则
+export function isSupportWebp() {
+	const su = document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') == 0
+	if (su) {
+		document.querySelector('html').className = 'webp'
+	}
+	return su
+}
+
+webpRule.append({
+    prop: 'background-image',
+    value: `url(${webpImageUrl})`
+})
+```
 
 3. 首屏cssinline/jsinline
+
+将首屏需要的css/js注入到html内部
