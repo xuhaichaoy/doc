@@ -1,0 +1,130 @@
+# Vue Cli webpack配置
+
+## 打包css
+
+我们的项目是用vuecli搭建的，在我们配置`vue.config.js`时，基本上不涉及对css的打包配置。
+[vuecli](https://cli.vuejs.org/zh/config/#css-extract)
+
+### 1.CSS提取
+
+webpack4提取css用的插件名称是`MiniCssExtractPlugin`，此插件将CSS提取到单独的文件中。
+它为每个包含CSS的JS文件创建一个CSS文件。它支持按需加载CSS和SourceMap。
+在webpack4之前都是用的`extract-text-webpack-plugin`插件。
+相比之前的插件`MiniCssExtractPlugin`的优势如下：
+
+- 1. 支持异步加载
+- 2. 不会有重复的编译
+- 3. 更容易使用
+- 4. 特定于css
+
+**MiniCssExtractPlugin的基本用法：**
+
+```javascript
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+module.exports = {
+  plugins: [
+    new MiniCssExtractPlugin({
+      // both options are optional
+      filename: '[name].css',
+      chunkFilename: '[id].css',
+    }),
+  ],
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: [
+          {
+            loader: MiniCssExtractPlugin.loader,
+            options: {
+              // both options are optional
+              publicPath: '../',
+              hmr: process.env.NODE_ENV === 'development',
+              //reloadAll: true
+            },
+          },
+          'css-loader',
+        ],
+      },
+    ],
+  },
+};
+```
+
+除了在plugins中增加`MiniCssExtractPlugin`的配置外，
+loader链中之前用`'style-loader'`的地方要替换成了`MiniCssExtractPlugin.loader`。
+
+
+**配置说明：**
+
+- filename和chunkFilename的区别：filename指直接被入口文件引用的文件的名称，
+chunkFilename指不被入口文件直接引用，又单独被打包出来的文件的名称，
+一般来说，这个 chunk 文件指的就是要懒加载的代码。
+- publicPath指将打包完的css文件放在哪个路径下。
+- hmr是否支持热更新
+- 这个插件应该仅被应用于线上环境，如果想在开发环境下使用css的模块热更新的话也能用这个插件。
+但是当涉及到代码分割时，热更新可能存在问题了，所以要加一个reloadAll的配置，热更新失败时重新加载页面。
+
+
+### 2.CSS压缩
+
+对提取出的css文件进行压缩官网上推荐的插件是 [optimize-css-assets-webpack-plugin](https://github.com/NMFR/optimize-css-assets-webpack-plugin)，
+使用很简单在webpack的配置文件中增加optimization的配置：
+
+```javascript
+optimization: {
+    minimizer: [new OptimizeCSSAssetsPlugin({})],
+}
+```
+
+但是如果你设置的webpack的模式是development，打包发现压缩并没有生效。
+**可见optimize-css-assets-webpack-plugin仅在线上环境生效**
+
+我们查看vuecli3中的webpack配置，发现里面并没有使用`optimize-css-assets-webpack-plugin`插件，
+而是用的`optimize-cssnano-plugin`，这个插件和`optimize-css-assets-webpack-plugin`的作用是一样，
+但是比它在代码映射上更准确。配置如下：
+
+```javascript
+plugins: [
+	new CleanWebpackPlugin(),
+	new HtmlWebpackPlugin(),
+	new MiniCssExtractPlugin({
+	      filename: '[name].css',
+	      chunkFilename: '[id].css',
+	    
+	}),
+	new OptimizeCssnanoPlugin({
+	    sourceMap: false,
+	    cssnanoOptions: {
+	        preset: [
+	            'default',
+	            {
+	              mergeLonghand: false,
+	              cssDeclarationSorter: false
+	            }
+	          ]
+	       }
+	  })
+]
+```
+
+打包发现**即使在开发环境下，使用optimize-cssnano-plugin，css文件也被压缩了。**
+
+### 3.CSS合并
+
+利用代码分割可以将所有css样式打包到一个文件中，和js的代码分割方法一致，增加一个css的缓存组即可，配置如下：
+
+```javascript
+optimization: {
+    splitChunks: {
+      cacheGroups: {
+        styles: {
+          name: 'styles',
+          test: /\.css$/,
+          chunks: 'all',
+          enforce: true,//忽略splitChunks的其他配置，强制将匹配到的缓存组中的文件合并为一个styles.css文件
+        },
+      },
+    },
+  },
+```
