@@ -1,0 +1,386 @@
+
+### 文件结构
+
+**在应用商店中下载下来的插件基本上都是以.crx为文件后缀，该文件其实就是一个压缩包，包括插件所需要的html、css、javascript、图片资源等等文件。**
+
+- `manifest.json`
+- `background script`
+- `content script`
+- `popup`
+
+严格上来讲主要是background script 、 content script 和 popup，毕竟他们都是贯穿在manifest里的，把manifest写出来，只是为了凸显一下它的重要性
+
+
+一般来说，清单文件manifest.json文件是必须的，且必须放在插件开发目录的根目录上。其他的目录都可以自定义。
+
+### `manifest.json`文件
+
+一个插件，必须都含有这个一个文件——manifest.json，位于根目录。顾名思义，这是一个扩展的组成清单，在这个清单里能大约看到该插件的一个“规则”。
+
+清单文件的作用是提供插件的各种信息，例如插件能够做的事情，以及插件的文件配置等等信息。下面是一个清单文件的示例
+
+```json
+{
+  "name": "我的扩展程序",
+  "version": "2.1",
+  "manifest_version": 2,
+  "description": "从Google获得信息。",
+  "icons": {
+    "128": "icon_128.png"
+  },
+  "background": {
+    "persistent": false,
+    "scripts": ["bg.js"]
+  },
+  "permissions": ["http://*.google.com/", "https://*.google.com/"],
+  "browser_action": {
+    "default_title": "",
+    "default_icon": "icon_19.png",
+    "default_popup": "popup.html"
+  }
+}
+
+```
+
+### `background script`文件
+
+background可以理解为插件运行在浏览器中的一个后台网站/脚本，注意它是与当前浏览页面无关的。
+
+实际上这部分内容的配置情况也会写在manifest里，对应的是`background`配置项。单独拿出来讲，
+
+是彰显它的分量很重，也是一个插件常用的配置。从其中几个配置项项去了解一下什么是background script
+
+### `content script`文件
+
+这部分脚本，简单来说是插入到网页中的脚本。它具有独立而富有包容性。
+
+所谓独立，指它的工作空间，命名空间，域等是独立的，不会说跟插入到的页面的某些函数和变量发生冲突；
+
+所谓包容性，指插件把自己的一些脚本（content script）插入到符合条件的页面里，作为页面的脚本，
+因此与插入的页面共享dom的，即用dom操作是针对插入的网页的，在这些脚本里使用的window对象跟插入页面的window是一样的。
+
+主要用在消息传递上（使用postMessage和onmessage）
+实际上这部分内容的配置情况也会写在manifest里，对应的是content_scripts配置项。
+
+单独拿出来讲，是彰显它的分量很重，也是一个插件常用的配置。从其中几个配置项项去了解一下什么是content script
+
+### `popup`文件
+
+其实这部分，早就讲过了，就是在manifest里的`browser_action`与`page_action`配置项里设置的
+
+### 两种用户界面
+
+chrome插件一般有两种用户界面，一种是浏览器按钮，一种是页面地址栏按钮。前者称之为Browser Actions，后者被称之为Page Actions。
+
+Page Actions 与 Browser Actions 的区别就是 Page Actions 并不是在每个页面上都是有用的，它必须在特定的页面中插件功能才能使用。
+
+这两种用户面界面分别对应`manifest.json`中的`browser_action`和`page_action`字段。
+
+### 基础的通信机制
+
+上面讲述了基本的组成部分，那么这几部分，他们要进行交流合作，把他们组织起来，才能成就一个漂亮的扩展。那么这种交流，分为以下几种说明：
+
+- content script与background的通信
+- popup与background的通信
+- popup与content script的通信
+- 插件iframe网站与插入网页的通信
+
+最后一点，是额外说的，但是却是很重要的。毕竟很多扩展，也是以iframe的形式呈现的。
+
+#### content script与background的通信
+
+**content-script向background发送消息**
+
+```js title="content-script端"
+chrome.runtime.sendMessege(
+    message,
+    function(response) {…}
+)
+```
+
+就能向background发送消息了，第一个参数message为发送的消息（基础数据类型），
+回调函数里的第一个参数为background接收消息后返回的消息（如有）
+
+
+```js title="background端"
+chrome.runtime.onMessege.addListener(
+    function(request, sender, sendResponse) {…}
+)
+```
+
+进行监听发来的消息，`request`表示发来的消息，`sendResponse`是一个函数，用于对发来的消息进行回应，如
+`sendResponse('我已收到你的消息：'+JSON.stringify(request));`
+这里需要注意的是，默认情况下`sendResponse`函数的执行是同步的，
+如果在这个监听消息的处理函数的同步执行流程里没有发现`sendResponse`，
+则默认返回undefined，假设我们是要经过一个异步处理之后才调用`sendResponse`，
+已经为时已晚了。因此，我们可能需要异步执行`sendResponse`，这时我们在这个监听函数里的添加`return true`就能实现了。
+还有，由于background监听所有页面上的content script上发来的消息，
+如果多个页面同时发送同种消息，background的onMessage只会处理最先收到的那个，其他的不了了之了。
+
+
+**background向content-script发送消息**
+
+我们发现，一个插件里只有一个background环境，而content-script有多个（一个页面一个），那么background怎么向特定的content-script发送消息？
+
+**在background端**
+
+首先我们需要知道要向哪个content scripts发送消息，一般一个页面一份content scripts，而一个页面对应一个浏览器tab，每个tab都有自己的tabId，因此首先要获取要发送消息的tab对应的tabId。
+
+```js
+/**
+ * 获取当前选项卡id
+ * @param callback - 获取到id后要执行的回调函数
+ */
+function getCurrentTabId(callback) {
+    chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
+        if (callback) {
+            callback(tabs.length ? tabs[0].id: null);
+        }
+    });
+}
+```
+
+
+```js
+// 当知道了tabId后，就使用该api进行发送消息
+
+chrome.tabs.sendMessage(tabId, message, function(response) {...});
+
+// 其中message为发送的消息，回调函数的response为content scripts接收到消息后的回传消息
+```
+
+
+**在content scripts端**
+
+```js
+chrome.runtime.onMessege.addListener(function(request, sender, sendResponse) {…})
+
+// 进行来自background发来消息的监听并回传
+
+```
+
+#### popup与background的通信
+
+一般地，popup与background的交流，常见于popup要获取background里的某些“东西”，
+当然我们可以使用上述的`chrome.runtime.sendMessage`和`chrome.runtime.onMessage`的方式
+进行popup向background的交流，但是其实有更方便快捷的方式：
+
+```js
+var bg = chrome.extension.getBackgroundPage();
+bg.someMethod();    //someMethod()是background中的一个方法
+```
+
+
+#### popup与content script的通信
+
+这里的通信，实际上跟background与content script的方式是一样的
+
+
+#### 插件iframe网站与插入网页的通信
+
+其实这两个的通信，算不上是chrome extension开发里的知识，它就是一个基础的js知识——ifame与父窗体的通信。
+
+同域的情况下，可以通过DOM操作达到通信的目的，如获取dom元素，获取值赋值之类的。
+在父窗体里，用window.contentWindow获取到iframe的window对象
+在iframe里，用window.parent获取到父窗体的window对象
+
+而在跨域下，上述的方法是行不通的，网上也有各种方法解决，但是在插件这块里，最方便的就是使用js的message机制了。
+
+我这里说的message机制，就是使用window对象的postMessage()和onmessage。
+
+一般插件展现都是在别人的网站上，因此没办法直接在别人的网站上添加postMessage和onmessage的代码。
+这时候，重任就落在了插件的content script身上了（之前说了他们共用DOM）。
+由于content script是自己编写的，所以可以“为所欲为”了
+
+**iframe向父窗体发送消息**
+
+
+
+**在iframe端**
+
+假设iframe类名为extension-iframe，这里设置类名而不是id名的初衷是，
+我们不能保证设置的名称原本的网站会不会已经存在，设置类名能共存。发送消息使用
+window.parent.postMessage(message, '*');
+其中message为发送的消息
+
+
+**在父窗体端**
+
+由于一个页面，可能有来自页面本身的postMessage来的消息，
+也有可能来自该页面其他chrome extension发送来的消息，因此用onmessage来监听，要做好区分来源，这里使用以下方法
+
+```js
+window.addEventListener('message', function (event, a, b) {
+    // 如果没消息就退出
+    if (!event.data) {
+        return;
+    }
+    var iframes = document.getElementsByClassName('extension-iframe');
+    var extensionIframe = null; // 存插件iframe节点对象
+    var correctSource = false;  // 是否来源正确
+    // 找出真正的插件生成的iframe
+    for (var i = 0; i < iframes.length; i++) {
+        if (iframes[i].contentWindow && (event.source === iframes[i].contentWindow)) {
+            correctSource = true;
+            extensionIframe = iframes[i];
+            break;
+        }
+    }
+    // 如果来源不是来自插件的，就退出
+    if (!correctSource) {
+        return;
+    }
+}, false);
+```
+
+这里也不能百分百区分好是不是来自自己extension的消息，或许真的那么倒霉刚好有一个跟自己extension同类名的iframe也发了一个消息过来。
+因此还可以加多一层保障，在iframe发送消息的内容上做手脚，例如加个from，然后在这边判断一下等。
+当然，这样也不能百分百确定，只能说保障更上一层楼了。
+
+**父窗体向iframe发送消息**
+
+**在父窗体端**
+
+使用 `extensionIframe.contentWindow.postMessage(message, '*');`
+其中`extensionIframe`为插件的iframe节点对象，`message`为发送的消息，例如
+
+```js
+{from: 'content-script', other: xxx}
+```
+
+**在iframe端**
+
+```js
+window.addEventListener('message', function (event, a, b) {
+    let result = event.data;
+    if (result && (result.from === 'content-script') && (event.source === window.parent)) {...}
+});
+```
+
+在这里，在发送消息里增加了个from属性，进而进一步判断是不是来自父窗体自己插件的content script
+
+
+
+
+
+
+### 弹出窗口和后台页面
+
+弹出窗口一般用于插件和用户的交互，而后台页面一般用于插件本身做一些额外的事情。比如有时候，插件需要联网进行数据同步等操作，这种操作用户是无感知的，所有就要求插件需要有一个后台页面来运行这部分的逻辑。
+
+其实后台页面还可以分为持久运行的后端页面和事件页面，这里对这两者就不多做说明了，更多的内容可以参阅具体的文档。
+
+### demo
+
+目录中新建清单文件，manifest.json文件内容如下，
+
+```json
+{
+    "name": "todo-plugin",
+    "version": "0.9.0",
+    "manifest_version": 2,
+    "description": "chrome plugin demo",
+    "browser_action": {
+        "default_icon": "icon.png",
+        "default_title": "Todo List",
+        "default_popup": "popup.html"
+    }
+}
+```
+
+在清单文件中，我们定义了插件的名称、版本、描述，插件的浏览器按钮行为以及插件所需要注入的脚本文件。按钮行为中还包括了默认的按钮图标、按钮标题（鼠标悬停时显示）以及默认的弹出框`popup.html`。
+
+**注意：新版的chrome插件开发需要在清单文件中制定`mainfest_version`为2.**
+
+
+这里的弹出框其实就是我们这个插件与用户交互的主要界面，它其实就是一个html页面。不过这个popup.html文件并不需要<html></html>、<body></body>、<head></head>这样的标签。popup.html文件内容如下，
+
+```html
+<div id="add-new-item">添加新项</div>
+<div id="add-new-item-input" class="hide">
+    <input type="text" id="new-item-title" placeholder="添加新任务"/>
+</div>
+<div id="item-list"></div>
+<script type="text/javascript" src="main.js"></script>
+
+```
+
+最后一行我们使用外链的方式加载了popup页面的交互逻辑。main.js内容也很简单，如下，
+
+```js
+(function () {
+    var $ = function (id) {
+        return document.getElementById(id);
+    };
+    var Tasks = {
+        show: function (obj) {
+            obj.className = '';
+            return this;
+        },
+        hide: function (obj) {
+            obj.className = 'hide';
+            return this;
+        },
+        $addNewItem: $('add-new-item'),
+        $addNewItemInput: $('add-new-item-input'),
+        $itemList: $('item-list'),
+        $newItemTitle: $('new-item-title'),
+        init: function () {
+            //打开添加文本框
+            Tasks.$addNewItem.addEventListener('click', function () {
+                Tasks.show(Tasks.$addNewItemInput).hide(Tasks.$addNewItem);
+                Tasks.$newItemTitle.focus();
+            }, true);
+            //回车添加任务
+            Tasks.$newItemTitle.addEventListener('keyup', function (ev) {
+                var ev = ev || window.event;
+                if (ev.keyCode == 13) {
+                    //TODO:写入本地数据
+                    var task = Tasks.$newItemTitle.value;
+                    Tasks.AppendHtml(task);
+                    Tasks.$newItemTitle.value = '';
+                    Tasks.hide(Tasks.$addNewItemInput).show(Tasks.$addNewItem);
+                }
+                ev.preventDefault();
+            }, true);
+            //取消添加
+            Tasks.$newItemTitle.addEventListener('blur', function () {
+                Tasks.$newItemTitle.value = '';
+                Tasks.hide(Tasks.$addNewItemInput).show(Tasks.$addNewItem);
+            }, true);
+            //TODO 初始化数据，加载本地数据，生成html
+        },
+        //增加
+        Add: function () {
+            //TODO
+        },
+        //修改
+        Edit: function () {
+            //TODO
+        },
+        //删除
+        Del: function () {
+            //TODO
+        },
+        AppendHtml: function (title) {
+            var oDiv = document.createElement('div');
+            oDiv.className = 'item item-todo';
+            var oInput = document.createElement('input');
+            oInput.type = 'checkbox';
+            var oTitle = document.createElement('span');
+            oTitle.innerHTML = title;
+            oDiv.appendChild(oInput);
+            oDiv.appendChild(oTitle);
+            Tasks.$itemList.appendChild(oDiv);
+            oDiv.addEventListener('click', function () {
+                //TODO
+            }, true);
+        },
+        RemoveHtml: function () {
+            //TODO
+        }
+    }
+    Tasks.init();
+})();
+```
+

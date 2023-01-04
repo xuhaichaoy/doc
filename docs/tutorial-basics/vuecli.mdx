@@ -89,22 +89,22 @@ plugins: [
 	new CleanWebpackPlugin(),
 	new HtmlWebpackPlugin(),
 	new MiniCssExtractPlugin({
-	      filename: '[name].css',
-	      chunkFilename: '[id].css',
+    filename: '[name].css',
+    chunkFilename: '[id].css',
 	    
 	}),
 	new OptimizeCssnanoPlugin({
-	    sourceMap: false,
-	    cssnanoOptions: {
-	        preset: [
-	            'default',
-	            {
-	              mergeLonghand: false,
-	              cssDeclarationSorter: false
-	            }
-	          ]
-	       }
-	  })
+    sourceMap: false,
+    cssnanoOptions: {
+      preset: [
+          'default',
+          {
+            mergeLonghand: false,
+            cssDeclarationSorter: false
+          }
+        ]
+      }
+  })
 ]
 ```
 
@@ -116,15 +116,128 @@ plugins: [
 
 ```javascript
 optimization: {
-    splitChunks: {
-      cacheGroups: {
-        styles: {
-          name: 'styles',
-          test: /\.css$/,
-          chunks: 'all',
-          enforce: true,//忽略splitChunks的其他配置，强制将匹配到的缓存组中的文件合并为一个styles.css文件
-        },
+  splitChunks: {
+    cacheGroups: {
+      styles: {
+        name: 'styles',
+        test: /\.css$/,
+        chunks: 'all',
+        enforce: true,//忽略splitChunks的其他配置，强制将匹配到的缓存组中的文件合并为一个styles.css文件
       },
     },
   },
+},
 ```
+
+## 代码分割
+
+为了避免一次加载过大的文件和充分利用浏览器缓存，我们需要将不经常被修改的文件单独打包。
+即对项目中的代码进行分割。webpack支持两种代码分割的方式。
+
+### 1.同步引入文件
+
+```javascript title="index.js"
+import _ from 'lodash'
+console.log(_.join(['Hello', 'webpack'], ' '))
+```
+
+如果直接打包index.js会发现业务代码和loadsh库打包到了一个bundle.js文件中。
+可见webpack默认不会处理同步引入的文件。此时修改webpack的配置,增加optimization.splitChunks的配置项：
+
+```javascript
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+
+module.exports = {
+  mode: 'development',
+  entry: {
+	  index: './src/index.js'
+  },
+  output: {
+    filename: 'bundle.js',
+    chunkFilename: '[name].bundle.js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  plugins: [
+    new CleanWebpackPlugin(),
+    new HtmlWebpackPlugin()
+  ],
+  optimization: {
+    splitChunks: {
+      chunks: 'all'
+    }
+  }
+}
+```
+
+再次打包发现除了bundle.js文件还生成了vendors~index.bundle.js。我们成功的将lodash分割了出来。
+
+### 2.异步引入文件
+
+```javascript title="修改index.js代码"
+function getComponent() {
+	return import(/* webpackChunkName: "lodash" */ 'lodash').then(({default: _}) => {
+		const element = document.createElement("div");
+		element.innerHTML = _.join(['Hello', 'webpack'], ' ');
+		return element;
+	}).catch(error => 'An error occurred while loading the component');
+}
+getComponent().then(component => {
+	document.body.appendChild(component);
+})
+```
+
+删除掉webpack中`optimization.splitChunks`的配置项后再进行打包，结果和上面的一致。
+loadsh被提取到了vendors~lodash.bundle.js文件中。所以**webpack默认是仅对异步加载的块进行分割**。
+我们需要default的原因是，由于Webpack4在导入CommonJS模块时，导入将不再解析为module.exports的值，
+而是为CommonJS模块创建一个人工命名空间对象。
+
+我们还可以用async函数对上面的代码进行简化：
+
+```javascript
+async function getComponent() {
+	const {default: _} = await import(/* webpackChunkName: "lodash" */ 'lodash');
+	const element = document.createElement("div");
+	element.innerHTML = _.join(['Hello', 'webpack'], ' ');
+	return element;
+}
+getComponent().then(component => {
+	document.body.appendChild(component);
+})
+```
+
+打包结果同样将lodash分割了出来。
+
+但是不管是同步引入模块还是异步引入都会受splitChunks配置项的影响
+（例如分割出的lodash名称为vendors~lodash.bundle.js）。
+下面我们来详细的说一下webpack中splitChunks默认配置：
+
+```javascript
+module.exports = {
+  optimization: {
+    splitChunks: {
+      chunks: 'async',//表示将选择哪些块进行优化。提供字符串时，有效值为all、async和initial,默认是仅对异步加载的块进行分割。
+      minSize: 30000,//模块大于minSize时才会被分割出来。
+      maxSize: 0,//生成的块的最大大小，如果超过了这个限制，大块会被拆分成多个小块。
+      minChunks: 1,//拆分前必须共享模块的最小块数。
+      maxAsyncRequests: 5,//按需加载时并行请求的最大数目。
+      maxInitialRequests: 3,//入口点的最大并行请求数
+      automaticNameDelimiter: '~',//默认情况下，webpack将使用块的来源和名称（例如vendors~main.js）生成名称。此选项允许您指定要用于生成的名称的分隔符。
+      automaticNameMaxLength: 30,//允许为SplitChunksPlugin生成的块名称的最大长度
+      cacheGroups: {
+        vendors: {
+          test: /[\\/]node_modules[\\/]/,//控制此缓存组选择的模块。省略它将选择所有模块。它可以匹配绝对模块资源路径或块名称。匹配块名称时，将选择块中的所有模块。
+          priority: -10//一个模块可以属于多个缓存组,模块出现在优先级最高的缓存组中
+        },
+        default: {
+          minChunks: 2,
+          priority: -20,
+          reuseExistingChunk: true//如果当前块包含已经从主包中分离出来的模块，那么该模块将被重用，而不是生成新的模块
+        }
+      }
+    }
+  }
+};
+```
+
